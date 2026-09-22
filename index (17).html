@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Калькулятор террасы — демо</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --pine:#1F3A2E;
+  --pine-2:#2D5242;
+  --larch:#A8743F;
+  --larch-soft:#F1E3D1;
+  --paper:#EEF0EA;
+  --card:#FFFFFF;
+  --ink:#232B26;
+  --mute:#66706A;
+  --line:#D5DAD2;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:15px;line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--larch);outline-offset:2px}
+
+/* шапка: доска-планка */
+header.top{background:var(--pine);color:#fff;position:relative;overflow:hidden}
+header.top::after{content:"";position:absolute;inset:auto 0 0 0;height:14px;
+  background:repeating-linear-gradient(90deg,#8A5A2C 0 118px,#6E4520 118px 121px,#A8743F 121px 236px,#6E4520 236px 239px)}
+.top-in{max-width:1200px;margin:0 auto;padding:28px 20px 42px;display:flex;gap:24px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+.top h1{margin:0;font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.top p{margin:6px 0 0;color:#C9D6CE;max-width:60ch}
+.demo-badge{background:var(--larch-soft);color:#6E4520;border-radius:999px;padding:6px 14px;font-weight:600;font-size:13px;white-space:nowrap}
+
+main{max-width:1200px;margin:0 auto;padding:24px 20px 60px;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+@media (max-width:920px){main{grid-template-columns:1fr}}
+
+.block{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.block h2{margin:0 0 12px;font-size:18px;font-weight:700;display:flex;align-items:baseline;gap:10px}
+.block h2 .step{color:var(--larch);font-weight:800;font-size:15px}
+.block h2 .sum{margin-left:auto;font-size:14px;font-weight:600;color:var(--mute)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--mute);margin-bottom:4px}
+input[type=number],input[type=text],input[type=tel],select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:#FAFBF8}
+input:focus,select:focus{border-color:var(--pine-2);background:#fff}
+.check{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--ink);margin-top:10px}
+.check input{width:18px;height:18px;accent-color:var(--pine)}
+.hint{font-size:12.5px;color:var(--mute);margin-top:8px}
+
+/* итог */
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}
+@media (max-width:920px){aside{position:static}}
+.total{background:var(--pine);color:#fff;border-radius:14px;padding:20px}
+.total .big{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.total .cap{color:#C9D6CE;font-size:13px}
+.lines{margin:16px 0 0;padding:0;list-style:none;border-top:1px solid rgba(255,255,255,.18)}
+.lines li{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px}
+.lines li span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
+.lines li.minus span:last-child{color:#F1C99A}
+.btn{display:block;width:100%;border:0;border-radius:10px;padding:12px 14px;font-weight:700;cursor:pointer;margin-top:10px}
+.btn-main{background:var(--larch);color:#fff}
+.btn-main:hover{background:#94622F}
+.btn-ghost{background:transparent;color:var(--pine);border:1.5px solid var(--pine)}
+.btn-ghost:hover{background:#E3E9E3}
+.side-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:14px}
+.side-card h3{margin:0 0 10px;font-size:16px}
+.clients{list-style:none;margin:10px 0 0;padding:0;max-height:220px;overflow:auto}
+.clients li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.clients li b{flex:1;font-weight:600}
+.clients button{border:0;background:#E3E9E3;border-radius:7px;padding:5px 9px;cursor:pointer;font-size:13px}
+.clients button.del{background:#F4E1DA;color:#8A3B22}
+.empty{color:var(--mute);font-size:13.5px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* КП для PDF */
+#kp{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#232B26;font-family:"Onest",Arial,sans-serif}
+#kp .kp-head{background:#1F3A2E;color:#fff;padding:34px 40px 30px;position:relative}
+#kp .kp-head::after{content:"";position:absolute;left:0;right:0;bottom:-10px;height:10px;background:repeating-linear-gradient(90deg,#8A5A2C 0 90px,#6E4520 90px 92px,#A8743F 92px 182px,#6E4520 182px 184px)}
+#kp h1{margin:0;font-size:28px}
+#kp .kp-sub{color:#C9D6CE;margin-top:6px;font-size:14px}
+#kp .kp-body{padding:36px 40px 40px}
+#kp table{width:100%;border-collapse:collapse;font-size:13px}
+#kp th{text-align:left;color:#66706A;font-weight:600;border-bottom:2px solid #1F3A2E;padding:8px 6px}
+#kp td{padding:8px 6px;border-bottom:1px solid #E1E5DE;vertical-align:top}
+#kp td.n,#kp th.n{text-align:right;white-space:nowrap}
+#kp .sec td{background:#F1E3D1;font-weight:700;color:#6E4520}
+#kp .kp-total{margin-top:22px;display:flex;justify-content:flex-end}
+#kp .kp-total table{width:340px}
+#kp .kp-total .grand td{font-size:18px;font-weight:800;border-bottom:0;color:#1F3A2E}
+#kp .kp-foot{margin-top:28px;font-size:12px;color:#66706A;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div>
+      <h1>Калькулятор террасы под ключ</h1>
+      <p>Введите размеры — программа посчитает материалы, работы и доставку и соберёт коммерческое предложение в PDF.</p>
+    </div>
+    <span class="demo-badge">Демо-версия, цены условные</span>
+  </div>
+</header>
+
+<main>
+  <div id="form">
+    <section class="block">
+      <h2>Клиент</h2>
+      <div class="row">
+        <div><label for="cName">Имя клиента</label><input id="cName" type="text" placeholder="Например, Иван Петров"></div>
+        <div><label for="cPhone">Телефон</label><input id="cPhone" type="tel" placeholder="+7 900 000-00-00"></div>
+        <div><label for="cAddr">Адрес объекта</label><input id="cAddr" type="text" placeholder="Населённый пункт, улица"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">1</span>Фундамент<span class="sum" id="s_found"></span></h2>
+      <div class="row">
+        <div><label for="fType">Тип основания</label>
+          <select id="fType">
+            <option value="piles">Винтовые сваи</option>
+            <option value="blocks">Бетонные блоки</option>
+            <option value="frame">Металлокаркас</option>
+            <option value="ready">Готовое основание (бетон, плитка)</option>
+          </select></div>
+        <div><label for="fArea">Площадь, м²</label><input id="fArea" type="number" min="0" step="0.1" value="24"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">2</span>Настил<span class="sum" id="s_deck"></span></h2>
+      <div class="row">
+        <div><label for="dType">Доска</label>
+          <select id="dType">
+            <option value="eco">ДПК «Эконом»</option>
+            <option value="std" selected>ДПК «Стандарт»</option>
+            <option value="prem">ДПК «Премиум»</option>
+            <option value="larch">Лиственница</option>
+          </select></div>
+        <div><label for="dArea">Площадь настила, м²</label><input id="dArea" type="number" min="0" step="0.1" value="24"></div>
+      </div>
+      <p class="hint">Лаги, крепёж и геотекстиль добавляются автоматически.</p>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">3</span>Лестницы<span class="sum" id="s_stairs"></span></h2>
+      <div class="row">
+        <div><label for="stSteps">Количество ступеней</label><input id="stSteps" type="number" min="0" step="1" value="3"></div>
+        <div><label for="stWidth">Ширина ступени, м</label><input id="stWidth" type="number" min="0" step="0.1" value="1.5"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">4</span>Цоколь<span class="sum" id="s_plinth"></span></h2>
+      <div class="row">
+        <div><label for="plLen">Длина обшивки цоколя, м</label><input id="plLen" type="number" min="0" step="0.1" value="14"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">5</span>Кровля<span class="sum" id="s_roof"></span></h2>
+      <div class="row">
+        <div><label for="rType">Покрытие</label>
+          <select id="rType">
+            <option value="none">Без кровли</option>
+            <option value="poly">Поликарбонат</option>
+            <option value="metal">Металлочерепица</option>
+            <option value="soft">Мягкая кровля</option>
+          </select></div>
+        <div><label for="rArea">Площадь кровли, м²</label><input id="rArea" type="number" min="0" step="0.1" value="0"></div>
+      </div>
+      <label class="check"><input id="rSep" type="checkbox"> Кровлю везём отдельной машиной</label>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">6</span>Ограждение<span class="sum" id="s_fence"></span></h2>
+      <div class="row">
+        <div><label for="fnType">Тип</label>
+          <select id="fnType">
+            <option value="none">Без ограждения</option>
+            <option value="wpc" selected>Перила из ДПК</option>
+            <option value="metal">Металлические</option>
+            <option value="glass">Стеклянные</option>
+          </select></div>
+        <div><label for="fnLen">Длина, м</label><input id="fnLen" type="number" min="0" step="0.1" value="10"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2><span class="step">7</span>Комплектующие<span class="sum" id="s_acc"></span></h2>
+      <div class="row">
+        <div><label for="aLights">Подсветка, шт</label><input id="aLights" type="number" min="0" step="1" value="6"></div>
+        <div><label for="aEdge">Торцевая планка, м</label><input id="aEdge" type="number" min="0" step="0.1" value="12"></div>
+        <div><label for="aOil">Масло / защита, м²</label><input id="aOil" type="number" min="0" step="0.1" value="0"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Доставка и скидки<span class="sum" id="s_trans"></span></h2>
+      <div class="row">
+        <div><label for="km">Расстояние до объекта, км</label><input id="km" type="number" min="0" step="1" value="30"></div>
+        <div><label for="discMat">Скидка на материалы, %</label><input id="discMat" type="number" min="0" max="100" step="1" value="0"></div>
+        <div><label for="discLab">Скидка на работы, %</label><input id="discLab" type="number" min="0" max="100" step="1" value="0"></div>
+      </div>
+    </section>
+  </div>
+
+  <aside>
+    <div class="total">
+      <div class="cap">Итого под ключ</div>
+      <div class="big" id="grand">0 ₽</div>
+      <ul class="lines" id="lines"></ul>
+      <button class="btn btn-main" id="btnPdf">Скачать КП в PDF</button>
+    </div>
+    <div class="side-card">
+      <h3>Мои клиенты</h3>
+      <button class="btn btn-ghost" id="btnSave" style="margin-top:0">Сохранить расчёт</button>
+      <ul class="clients" id="clients"></ul>
+    </div>
+  </aside>
+</main>
+
+<div id="kp"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ========= ЦЕНЫ (демо, условные) — меняются здесь ========= */
+const COMPANY = { name: "Терраса Демо", phone: "+7 900 000-00-00", site: "example.ru" };
+const P = {
+  found: {
+    piles:  { name: "Винтовые сваи", per: 1.5, mat: 2200, lab: 1500, frameMat: 450, frameLab: 350 },
+    blocks: { name: "Бетонные блоки", per: 1.2, mat: 350, lab: 400, frameMat: 450, frameLab: 350 },
+    frame:  { name: "Металлокаркас", m2Mat: 2600, m2Lab: 1400 },
+    ready:  { name: "Готовое основание", m2Mat: 0, m2Lab: 150 }
+  },
+  deck: {
+    eco:  { name: "ДПК «Эконом»", m2: 2100 },
+    std:  { name: "ДПК «Стандарт»", m2: 3200 },
+    prem: { name: "ДПК «Премиум»", m2: 4600 },
+    larch:{ name: "Лиственница", m2: 2800 },
+    surcharge: 1.07,        // надбавка на материал настила, в КП не видна
+    lagPerM2: 3, lagPrice: 280,
+    clipsPerM2: 25, clipPrice: 12,
+    geo: 300,
+    lab: 1200
+  },
+  stairs: { mat: 4200, lab: 2500 },       // за ступень на 1 м ширины
+  plinth: { mat: 1400, lab: 600 },        // за погонный метр
+  roof: {
+    poly:  { name: "Поликарбонат", mat: 2400, lab: 1800 },
+    metal: { name: "Металлочерепица", mat: 3100, lab: 2100 },
+    soft:  { name: "Мягкая кровля", mat: 3800, lab: 2400 }
+  },
+  fence: {
+    wpc:   { name: "Перила из ДПК", mat: 4800, lab: 1900, balusterStep: 0.72 },
+    metal: { name: "Металлические перила", mat: 3900, lab: 1700 },
+    glass: { name: "Стеклянное ограждение", mat: 11500, lab: 3500 }
+  },
+  acc: { light: [1900, 600], edge: [650, 200], oil: [180, 150] },
+  transport: { perKm: 40, loading: 2500, buf: 1.5, bufSep: 2.0, round: 500 }
+};
+
+/* ========= помощники ========= */
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat(String($(id).value).replace(",", ".")); return isFinite(v) && v > 0 ? v : 0; };
+const rub = v => Math.round(v).toLocaleString("ru-RU") + " ₽";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function toast(t){ const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove("show"), 2200); }
+
+/* ========= расчёт ========= */
+function calc(){
+  const S = []; // разделы: {title, key, items:[{name, qty, unit, mat, lab}]}
+
+  // 1. Фундамент
+  { const t = $("fType").value, a = num("fArea"), f = P.found[t], items = [];
+    if (a > 0) {
+      if (f.per) {
+        const n = Math.ceil(a / f.per);
+        items.push({ name: f.name, qty: n, unit: "шт", mat: n * f.mat, lab: n * f.lab });
+        items.push({ name: "Обвязка основания", qty: a, unit: "м²", mat: a * f.frameMat, lab: a * f.frameLab });
+      } else {
+        items.push({ name: f.name, qty: a, unit: "м²", mat: a * f.m2Mat, lab: a * f.m2Lab });
+      }
+    }
+    S.push({ key: "found", title: "Фундамент", items }); }
+
+  // 2. Настил
+  { const d = P.deck, b = d[$("dType").value], a = num("dArea"), items = [];
+    if (a > 0) {
+      items.push({ name: "Террасная доска, " + b.name, qty: a, unit: "м²", mat: a * b.m2 * d.surcharge, lab: a * d.lab });
+      items.push({ name: "Лаги", qty: Math.ceil(a * d.lagPerM2), unit: "м", mat: Math.ceil(a * d.lagPerM2) * d.lagPrice, lab: 0 });
+      items.push({ name: "Крепёж (кляммеры)", qty: Math.ceil(a * d.clipsPerM2), unit: "шт", mat: Math.ceil(a * d.clipsPerM2) * d.clipPrice, lab: 0 });
+      items.push({ name: "Геотекстиль", qty: a, unit: "м²", mat: a * d.geo, lab: 0 });
+    }
+    S.push({ key: "deck", title: "Настил", items }); }
+
+  // 3. Лестницы
+  { const n = Math.round(num("stSteps")), w = num("stWidth"), items = [];
+    if (n > 0 && w > 0) items.push({ name: "Ступени шириной " + w + " м", qty: n, unit: "шт", mat: n * w * P.stairs.mat, lab: n * w * P.stairs.lab });
+    S.push({ key: "stairs", title: "Лестницы", items }); }
+
+  // 4. Цоколь
+  { const l = num("plLen"), items = [];
+    if (l > 0) items.push({ name: "Обшивка цоколя", qty: l, unit: "м", mat: l * P.plinth.mat, lab: l * P.plinth.lab });
+    S.push({ key: "plinth", title: "Цоколь", items }); }
+
+  // 5. Кровля
+  { const t = $("rType").value, a = num("rArea"), items = [];
+    if (t !== "none" && a > 0) { const r = P.roof[t]; items.push({ name: "Кровля: " + r.name.toLowerCase(), qty: a, unit: "м²", mat: a * r.mat, lab: a * r.lab }); }
+    S.push({ key: "roof", title: "Кровля", items }); }
+
+  // 6. Ограждение
+  { const t = $("fnType").value, l = num("fnLen"), items = [];
+    if (t !== "none" && l > 0) {
+      const f = P.fence[t];
+      const extra = f.balusterStep ? " (балясин: " + (Math.ceil(l / f.balusterStep) + 1) + " шт)" : "";
+      items.push({ name: f.name + extra, qty: l, unit: "м", mat: l * f.mat, lab: l * f.lab });
+    }
+    S.push({ key: "fence", title: "Ограждение", items }); }
+
+  // 7. Комплектующие
+  { const A = P.acc, items = [], li = Math.round(num("aLights")), ed = num("aEdge"), oil = num("aOil");
+    if (li) items.push({ name: "Подсветка встраиваемая", qty: li, unit: "шт", mat: li * A.light[0], lab: li * A.light[1] });
+    if (ed) items.push({ name: "Торцевая планка", qty: ed, unit: "м", mat: ed * A.edge[0], lab: ed * A.edge[1] });
+    if (oil) items.push({ name: "Масло / защитный состав", qty: oil, unit: "м²", mat: oil * A.oil[0], lab: oil * A.oil[1] });
+    S.push({ key: "acc", title: "Комплектующие", items }); }
+
+  let mat = 0, lab = 0;
+  S.forEach(s => { s.mat = s.items.reduce((x, i) => x + i.mat, 0); s.lab = s.items.reduce((x, i) => x + i.lab, 0); mat += s.mat; lab += s.lab; });
+
+  // доставка
+  const T = P.transport, km = num("km");
+  const sep = $("rType").value !== "none" && num("rArea") > 0 && $("rSep").checked;
+  const transport = km > 0 ? Math.round(((km * 2 * T.perKm) + T.loading) * (sep ? T.bufSep : T.buf) / T.round) * T.round : 0;
+
+  const dM = Math.min(num("discMat"), 100) / 100, dL = Math.min(num("discLab"), 100) / 100;
+  const discMat = mat * dM, discLab = lab * dL;
+  const total = mat - discMat + lab - discLab + transport;
+  return { S, mat, lab, discMat, discLab, transport, total, pctM: dM * 100, pctL: dL * 100 };
+}
+
+function render(){
+  const r = calc();
+  r.S.forEach(s => { const el = $("s_" + s.key); if (el) el.textContent = (s.mat + s.lab) ? rub(s.mat + s.lab) : ""; });
+  $("s_trans").textContent = r.transport ? "доставка " + rub(r.transport) : "";
+  $("grand").textContent = rub(r.total);
+  let h = `<li><span>Материалы</span><span>${rub(r.mat)}</span></li><li><span>Работы</span><span>${rub(r.lab)}</span></li>`;
+  if (r.discMat) h += `<li class="minus"><span>Скидка на материалы ${r.pctM}%</span><span>−${rub(r.discMat)}</span></li>`;
+  if (r.discLab) h += `<li class="minus"><span>Скидка на работы ${r.pctL}%</span><span>−${rub(r.discLab)}</span></li>`;
+  h += `<li><span>Доставка</span><span>${rub(r.transport)}</span></li>`;
+  $("lines").innerHTML = h;
+  return r;
+}
+
+/* ========= клиенты (хранятся в этом браузере) ========= */
+const KEY = "terrasa-demo-clients";
+const FIELDS = ["cName","cPhone","cAddr","fType","fArea","dType","dArea","stSteps","stWidth","plLen","rType","rArea","fnType","fnLen","aLights","aEdge","aOil","km","discMat","discLab"];
+function loadClients(){ try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch(e) { return []; } }
+function storeClients(list){ try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch(e) { return false; } }
+function drawClients(){
+  const list = loadClients(), ul = $("clients");
+  if (!list.length) { ul.innerHTML = '<li class="empty">Сохранённых расчётов пока нет. Заполните данные и нажмите «Сохранить расчёт».</li>'; return; }
+  ul.innerHTML = list.map((c, i) => `<li><b>${esc(c.data.cName || "Без имени")}</b><span class="empty">${rub(c.total)}</span><button data-open="${i}">Открыть</button><button class="del" data-del="${i}" aria-label="Удалить">✕</button></li>`).join("");
+}
+$("btnSave").onclick = () => {
+  const data = {}; FIELDS.forEach(f => data[f] = $(f).value); data.rSep = $("rSep").checked;
+  const list = loadClients(), total = calc().total;
+  const idx = list.findIndex(c => c.data.cName && c.data.cName === data.cName);
+  const rec = { data, total, date: new Date().toISOString() };
+  if (idx >= 0) list[idx] = rec; else list.unshift(rec);
+  toast(storeClients(list) ? "Расчёт сохранён" : "Браузер не дал сохранить расчёт");
+  drawClients();
+};
+$("clients").onclick = e => {
+  const o = e.target.dataset.open, d = e.target.dataset.del, list = loadClients();
+  if (o !== undefined) { const c = list[+o]; FIELDS.forEach(f => { if (c.data[f] !== undefined) $(f).value = c.data[f]; }); $("rSep").checked = !!c.data.rSep; render(); toast("Открыт расчёт: " + (c.data.cName || "без имени")); }
+  if (d !== undefined) { if (confirm("Удалить этот расчёт?")) { list.splice(+d, 1); storeClients(list); drawClients(); toast("Расчёт удалён"); } }
+};
+
+/* ========= КП в PDF ========= */
+function buildKP(r){
+  const fmtQ = q => (Math.round(q * 10) / 10).toLocaleString("ru-RU");
+  const date = new Date().toLocaleDateString("ru-RU");
+  let rows = "";
+  r.S.forEach(s => {
+    if (!s.items.length) return;
+    rows += `<tr class="sec"><td colspan="5">${s.title}</td></tr>`;
+    s.items.forEach(i => rows += `<tr><td>${esc(i.name)}</td><td class="n">${fmtQ(i.qty)} ${i.unit}</td><td class="n">${rub(i.mat)}</td><td class="n">${i.lab ? rub(i.lab) : "—"}</td><td class="n">${rub(i.mat + i.lab)}</td></tr>`);
+  });
+  let tot = `<tr><td>Материалы</td><td class="n">${rub(r.mat)}</td></tr><tr><td>Работы</td><td class="n">${rub(r.lab)}</td></tr>`;
+  if (r.discMat) tot += `<tr><td>Скидка на материалы ${r.pctM}%</td><td class="n">−${rub(r.discMat)}</td></tr>`;
+  if (r.discLab) tot += `<tr><td>Скидка на работы ${r.pctL}%</td><td class="n">−${rub(r.discLab)}</td></tr>`;
+  tot += `<tr><td>Доставка</td><td class="n">${rub(r.transport)}</td></tr><tr class="grand"><td>Итого</td><td class="n">${rub(r.total)}</td></tr>`;
+  const client = [$("cName").value, $("cPhone").value, $("cAddr").value].filter(Boolean).map(esc).join(", ");
+  $("kp").innerHTML = `
+    <div class="kp-head"><h1>Коммерческое предложение</h1>
+      <div class="kp-sub">${COMPANY.name} · терраса под ключ · ${date}</div></div>
+    <div class="kp-body">
+      ${client ? `<p style="margin:0 0 20px"><b>Клиент:</b> ${client}</p>` : ""}
+      <table><thead><tr><th>Позиция</th><th class="n">Кол-во</th><th class="n">Материалы</th><th class="n">Работы</th><th class="n">Сумма</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="kp-total"><table>${tot}</table></div>
+      <div class="kp-foot">Расчёт предварительный и уточняется после замера на объекте. Предложение действительно 14 дней.<br>
+      ${COMPANY.name} · ${COMPANY.phone} · ${COMPANY.site}<br>Демо-версия: цены условные.</div>
+    </div>`;
+}
+$("btnPdf").onclick = async () => {
+  const r = calc();
+  if (!r.total) { toast("Заполните хотя бы один раздел — сейчас сумма 0 ₽"); return; }
+  buildKP(r);
+  if (!window.html2canvas || !window.jspdf) { toast("PDF-модуль не загрузился — открываю печать"); printFallback(); return; }
+  toast("Готовлю PDF…");
+  try {
+    const canvas = await html2canvas($("kp"), { scale: 2, backgroundColor: "#ffffff" });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pw = 210, ph = 297, ih = canvas.height * pw / canvas.width;
+    const img = canvas.toDataURL("image/jpeg", 0.92);
+    let y = 0;
+    pdf.addImage(img, "JPEG", 0, y, pw, ih);
+    let left = ih - ph;
+    while (left > 0) { y -= ph; pdf.addPage(); pdf.addImage(img, "JPEG", 0, y, pw, ih); left -= ph; }
+    const nm = ($("cName").value || "клиент").trim().replace(/[\\/:*?"<>|]/g, "");
+    pdf.save("КП терраса — " + nm + ".pdf");
+    toast("КП скачано");
+  } catch (e) { toast("Не получилось собрать PDF — открываю печать"); printFallback(); }
+};
+function printFallback(){
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(`<html><head><title>КП</title><style>${[...document.querySelectorAll("style")].map(s => s.textContent).join("")} #kp{position:static;width:auto}</style></head><body>${$("kp").outerHTML}</body></html>`);
+  w.document.close(); w.focus(); w.print();
+}
+
+/* ========= запуск ========= */
+document.querySelectorAll("#form input, #form select").forEach(el => { el.addEventListener("input", render); el.addEventListener("change", render); });
+render(); drawClients();
+</script>
+</body>
+</html>
