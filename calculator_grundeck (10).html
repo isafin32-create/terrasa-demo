@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор террас — Терраса №1</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--g:#2C3B33;--gold:#C4943A;--gold2:#e8c87a;--bg:#f0ede8;--paper:#fff;--ink:#1a1a1a;--muted:#6b6657;--line:rgba(0,0,0,0.1);--linel:rgba(255,255,255,0.15);--r:10px}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);font-size:13.5px}
+button,select,input{font-family:inherit}
+.hdr{background:var(--g);color:#fff;padding:12px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.logo-name{font-family:'Fraunces',serif;font-size:19px;font-weight:600}
+.logo-sub{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold2);margin-top:1px}
+.hdr-phone{font-size:12px;color:rgba(255,255,255,.65)}
+.hdr-phone a{color:var(--gold2);font-weight:600;text-decoration:none}
+.ntabs{display:flex;gap:3px}
+.ntab{padding:7px 14px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.65);border:none;background:transparent}
+.ntab.active{background:var(--gold);color:#fff}
+.ntab:hover:not(.active){background:rgba(255,255,255,.1);color:#fff}
+.page{display:none;padding:18px 22px 60px;max-width:1200px;margin:0 auto}
+.page.active{display:block}
+
+.calc-grid{display:grid;grid-template-columns:1fr 310px;gap:16px;align-items:start}
+.calc-left{display:flex;flex-direction:column;gap:10px}
+.intro{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:15px 18px}
+.intro-eye{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.intro-title{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--g)}
+.intro-desc{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+.deck-row{background:var(--g);border-radius:var(--r);padding:13px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.deck-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);white-space:nowrap}
+.deck-row select{flex:1;min-width:220px;background:#fff;color:var(--g);font-size:13px;font-weight:500;padding:8px 10px;border:none;border-radius:7px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;transition:background .15s}
+.card-hd:hover{background:#f8f7f3}
+.card-hd.open{background:#f3f1eb;border-bottom:1px solid var(--line)}
+.hd-l{display:flex;align-items:center;gap:10px}
+.cb{width:16px;height:16px;accent-color:var(--g);cursor:pointer;flex-shrink:0}
+.card-name{font-size:14px;font-weight:600;color:var(--g)}
+.card-hint{font-size:11px;color:var(--muted);margin-top:1px}
+.params-card{background:linear-gradient(135deg,#2C3B33 0%,#3a5040 100%);border-radius:var(--r);padding:16px 18px;color:#fff;margin-bottom:0}
+.params-title{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:#efeae0;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.params-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.params-field label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px}
+.params-field input{width:100%;padding:8px 10px;font-size:14px;font-weight:600;border:none;border-radius:7px;background:rgba(255,255,255,.12);color:#fff;outline:none;text-align:center}
+.params-field input:focus{background:rgba(255,255,255,.2)}
+.params-field input::placeholder{color:rgba(255,255,255,.35);font-weight:400}
+.auto-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border-radius:6px;padding:4px 8px;font-size:11px;color:rgba(255,255,255,.7);margin-top:5px}
+.auto-badge b{color:var(--gold2);font-size:12px}
+.params-auto{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)}
+.auto-item{background:rgba(255,255,255,.06);border-radius:7px;padding:8px 10px;text-align:center}
+.auto-item-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:3px}
+.auto-item-value{font-size:14px;font-weight:700;color:#efeae0}
+.auto-item-unit{font-size:9.5px;color:var(--gold2)}
+.dir-toggle{display:flex;gap:4px;margin-top:6px}
+.dir-btn{flex:1;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.6);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.dir-btn.active{background:var(--gold);border-color:var(--gold);color:#fff}
+.edge-sides{display:flex;gap:5px;margin-top:6px}
+.edge-btn{width:28px;height:28px;border-radius:5px;border:1px solid rgba(0,0,0,.15);background:#fff;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s}
+.edge-btn.on{background:var(--g);color:#fff;border-color:var(--g)}
+.side-btn{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:8px;border:2px solid var(--line);background:#fff;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:left;width:100%}
+.side-btn:hover{background:#f0ede8;border-color:var(--g)}
+.side-btn.on{background:var(--g);color:#fff;border-color:var(--g)}
+.side-icon{font-size:14px;opacity:.7}
+.card-amt{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap}
+.card-bd{padding:14px 16px;display:none;flex-direction:column;gap:10px}
+.card-bd.open{display:flex}
+.field label{display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field select,.field input[type=number],.field input[type=text]{width:100%;padding:8px 10px;font-size:13px;border:1px solid rgba(0,0,0,.13);border-radius:7px;background:#fff;color:var(--ink);outline:none}
+.field select:focus,.field input:focus{border-color:var(--g)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.addons-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.addon-card{border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s}
+.addon-card:hover{background:#f8f7f3}
+.addon-card.on{border-color:var(--gold);background:#fdf8ee}
+.addon-emoji{font-size:22px;margin-bottom:5px}
+.addon-name{font-size:11px;font-weight:600;color:var(--g);line-height:1.3}
+.addon-price{font-size:12px;font-weight:700;color:var(--gold);margin-top:3px}
+
+.panel{background:var(--g);color:#fff;border-radius:var(--r);padding:18px;position:sticky;top:68px}
+.p-eye{font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold2);margin-bottom:10px}
+.p-lines{display:flex;flex-direction:column;gap:5px}
+.p-row{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.p-row .v{font-weight:600;white-space:nowrap}
+.p-muted{opacity:.5}
+.p-div{border-top:1px solid var(--linel);margin:9px 0}
+.p-disc{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.p-disc label{font-size:11px;color:var(--gold2)}
+.p-disc input{width:52px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12px;padding:5px 8px;border-radius:6px}
+.disc-show{font-size:11px;color:var(--gold2)}
+.p-total-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--gold2);margin-top:8px}
+.p-total{font-family:'Fraunces',serif;font-size:28px;font-weight:700;letter-spacing:-.5px;margin-top:3px}
+.p-note{font-size:10px;color:rgba(255,255,255,.35);margin-top:6px;line-height:1.4}
+.btn-save{width:100%;margin-top:10px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{background:rgba(255,255,255,.18)}
+.btn-kp{width:100%;margin-top:7px;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-kp:hover{background:#b8852e}
+.empty-hint{font-size:12px;color:rgba(255,255,255,.3);font-style:italic}
+
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.page-eye{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.page-title{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--g)}
+.btn-primary{background:var(--gold);color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-ghost{background:transparent;color:var(--g);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.client-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.client-name{font-size:15px;font-weight:600;color:var(--g);cursor:pointer}
+.client-name:hover{color:var(--gold)}
+.client-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.client-right{display:flex;align-items:center;gap:14px}
+.client-total{font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:var(--gold)}
+.btn-link{background:none;border:none;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;padding:0}
+.btn-danger{background:none;border:none;color:#b3503f;font-size:12px;cursor:pointer;padding:0}
+.empty-state{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:36px;text-align:center;color:var(--muted)}
+.back-link{font-size:13px;color:var(--muted);cursor:pointer;margin-bottom:12px;display:inline-block}
+.back-link:hover{color:var(--g)}
+.quote-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.quote-title{font-size:14px;font-weight:600;color:var(--g)}
+.quote-date{font-size:11px;color:var(--muted);margin-top:1px}
+.quote-right{display:flex;align-items:center;gap:14px}
+.quote-total{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--gold)}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--g);margin-bottom:14px}
+.modal-fields{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+
+@media print{
+  .hdr,.no-print,.page:not(#page-kp){display:none!important}
+  #page-kp{display:block!important;padding:0!important;max-width:100%!important}
+  .kp-root{background:none!important;padding:0!important}
+  .kp-page{box-shadow:none!important;margin:0!important;width:100%!important;page-break-after:always}
+  @page{size:A4;margin:0}
+}
+.kp-root{background:#8d8a7e;padding:20px 0}
+.kp-toolbar{max-width:794px;margin:0 auto 14px;display:flex;justify-content:space-between;align-items:center;padding:0 4px}
+.kp-page{width:794px;min-height:1123px;margin:0 auto 20px;background:#f6f3ec;position:relative;overflow:hidden;box-shadow:0 6px 32px rgba(0,0,0,.22)}
+.kp-pad{padding:48px 48px 65px}
+.kp-footer{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:12px 34px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#9a9484;border-top:1px solid #d9d2c2}
+.kp-footer.dark{color:rgba(239,234,224,.5);border-top:1px solid rgba(255,255,255,.1)}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div><div class="logo-name">Терраса №1</div><div class="logo-sub">Gründeck · официальный импортёр</div></div>
+  <div class="ntabs">
+    <button class="ntab active" onclick="showPage('calc')">Калькулятор</button>
+    <button class="ntab" onclick="showPage('clients')">Клиенты и КП</button>
+  </div>
+  <div class="hdr-phone">г. Казань, Сибирский тракт, 78 · <a href="tel:+79539994296">+7 (953) 999-42-96</a></div>
+</header>
+
+<div class="page active" id="page-calc">
+<div class="calc-grid">
+<div class="calc-left">
+
+  <div class="intro">
+    <div class="intro-eye">Конструктор сметы</div>
+    <div class="intro-title">Соберите террасу — точная цена сразу</div>
+    <div class="intro-desc">Введите размеры — расход материалов и стоимость считаются автоматически по правилам GRUNDECK (настил, свайное поле, каркас). В панели справа видно, откуда берётся каждое число: рабочее поле, ряды, раскрой, остатки.</div>
+  </div>
+
+  <!-- ══ КАРТОЧКА 0: ПАРАМЕТРЫ ОБЪЕКТА ══ -->
+  <div class="params-card">
+    <div class="params-title">📐 Параметры террасы</div>
+    <div class="params-grid">
+      <div class="params-field">
+        <label>Длина, м</label>
+        <input type="number" id="p-len" value="7" min="0.5" step="0.1" placeholder="7.0" oninput="onParamsChange()">
+      </div>
+      <div class="params-field">
+        <label>Ширина, м</label>
+        <input type="number" id="p-wid" value="4" min="0.5" step="0.1" placeholder="4.0" oninput="onParamsChange()">
+      </div>
+      <div class="params-field">
+        <label>Высота, м</label>
+        <input type="number" id="p-hgt" value="0.6" min="0.1" step="0.05" placeholder="0.6" oninput="onParamsChange()">
+      </div>
+    </div>
+    <div class="params-auto" id="params-auto">
+      <div class="auto-item"><div class="auto-item-label">Площадь</div><div class="auto-item-value" id="pa-area">28.0</div><div class="auto-item-unit">м²</div></div>
+      <div class="auto-item"><div class="auto-item-label" id="pa-piles-label">Свай</div><div class="auto-item-value" id="pa-piles">20</div><div class="auto-item-unit">шт</div></div>
+      <div class="auto-item"><div class="auto-item-label">Досок в цоколь</div><div class="auto-item-value" id="pa-plinth-rows">4</div><div class="auto-item-unit">ряда</div></div>
+      <div class="auto-item"><div class="auto-item-label">Ступеней</div><div class="auto-item-value" id="pa-steps">4</div><div class="auto-item-unit">шт</div></div>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1);display:flex;gap:20px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Направление доски</div>
+        <div class="dir-toggle">
+          <button class="dir-btn active" id="dir-len" onclick="setDir('len')">→ По длине</button>
+          <button class="dir-btn" id="dir-wid" onclick="setDir('wid')">↓ По ширине</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Обрамление — длина авто</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gold2)" id="edge-len-hint">—</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);margin-top:2px">выберите стороны в разделе ниже</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="deck-row">
+    <div class="deck-label">Террасная доска</div>
+    <select id="deckType" onchange="recalc()">
+      <option value="grundeck" selected>Gründeck Co-extrusion 142×22</option>
+      <option value="polivan">Поливан ДПК 140×20</option>
+      <option value="terrapol">Террапол Co-extrusion 145×22</option>
+      <option value="easy_woodx">Изи Декинг Wood-X 140×20</option>
+      <option value="easy_coex">Изи Декинг Co-extrusion 142×22</option>
+      <option value="sm_decking">СМ Декинг Robust 140×20</option>
+      <option value="mpk">МПК пустотелая 140×20</option>
+    </select>
+    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+      <span style="font-size:10px;color:var(--gold2);font-weight:700;white-space:nowrap">Длина заготовки</span>
+      <select id="deck-len" onchange="recalc()" style="background:#fff;color:var(--g);font-size:13px;font-weight:600;padding:7px 10px;border:none;border-radius:7px;width:100px">
+        <option value="4000" selected>4 000 мм</option>
+        <option value="3000">3 000 мм</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd open" id="hd-base" onclick="toggleCard('base')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-base" checked onclick="event.stopPropagation()" onchange="chkCard('base',this.checked)">
+        <div><div class="card-name">Основание террасы</div><div class="card-hint">Каркас, монтаж, настил, доска и кляймеры — считаются сами</div></div>
+      </div>
+      <div class="card-amt" id="amt-base"></div>
+    </div>
+    <div class="card-bd open" id="bd-base">
+      <div class="row2">
+        <div class="field">
+          <label>Тип основания</label>
+          <select id="base-type" onchange="updBaseHint();syncPileType();updFoundation();recalc()">
+            <option value="screw_piles">Винтовые сваи</option>
+            <option value="mkt_pipes">НКТ трубы</option>
+            <option value="concrete">Анкеровка к бетону</option>
+            <option value="concrete_corners">Уголки к бетону</option>
+            <option value="adj_supports">Регулируемые опоры (эксплуат. кровля)</option>
+            <option value="ready_base">Готовое основание</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Площадь террасы, м²</label>
+          <input type="number" id="base-area" value="28" min="0" step="0.5" oninput="recalc()" style="background:#f3f1eb;font-weight:600" title="Считается из параметров выше — можно скорректировать вручную">
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">↑ автозаполнено из параметров · можно изменить вручную</div>
+        </div>
+      </div>
+      <div class="fhint" id="base-fhint" style="font-size:11px;color:var(--muted);margin-top:6px">Открытый грунт, газон, песчаный берег. Отсутствует готовый фундамент.</div>
+      <div class="row2" style="margin-top:8px">
+        <div class="field" style="display:flex;align-items:center;gap:7px">
+          <input type="checkbox" id="cb-geotextil" checked onchange="recalc()">
+          <label style="margin:0" for="cb-geotextil">Геотекстиль с укладкой</label>
+        </div>
+        <div class="field">
+          <label>Площадь геотекстиля, м²</label>
+          <input type="number" id="geotextil-area" value="20" min="0" step="0.5" oninput="recalc()">
+        </div>
+      </div>
+
+      <!-- ── СВАИ (внутри раздела Основание) ── -->
+      <div id="piles-block" style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">
+          ⚙ Сваи / опоры
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Вид сваи / опоры</label>
+            <select id="pile-type" onchange="updPileHint();recalc()">
+              <option value="d57_1500">Свая d57 L1500</option>
+              <option value="d76_2000">Свая d76 L2000</option>
+              <option value="d76_3000">Свая d76 L3000</option>
+              <option value="adj_100">Рег. опора 100мм</option>
+              <option value="adj_200">Рег. опора 200мм</option>
+              <option value="none">Без свай</option>
+            </select>
+          </div>
+          <div class="field">
+            <label id="pile-count-label">Количество свай / опор, шт</label>
+            <input type="number" id="pile-count" value="20" min="0" step="1" oninput="recalc()"
+              style="background:#e8f0e8;font-weight:600" title="Автосчёт из параметров выше — можно изменить">
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">↑ авто · можно изменить</div>
+          </div>
+        </div>
+        <div class="row2" style="margin-top:6px" id="pile-ogolovok-row">
+          <div class="field" style="display:flex;align-items:center;gap:7px">
+            <input type="checkbox" id="cb-ogolovok" checked onchange="recalc()">
+            <label style="margin:0" for="cb-ogolovok">Оголовок 100×100</label>
+          </div>
+          <div class="field">
+            <label>Стоимость свай</label>
+            <div id="pile-cost-label" style="font-size:13px;font-weight:700;color:var(--gold);padding:8px 10px;background:var(--bg);border-radius:7px">—</div>
+          </div>
+        </div>
+        <div class="fhint" id="pile-hint" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+        <div id="base-scheme" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ КАРКАС ══ -->
+  <div class="card">
+    <div class="card-hd open" id="hd-frame" onclick="toggleCard('frame')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-frame" checked onclick="event.stopPropagation()" onchange="chkCard('frame',this.checked)">
+        <div><div class="card-name">Каркас</div><div class="card-hint">Металлопрофиль 1-го и 2-го слоя, уплотнительная лента — считается сам</div></div>
+      </div>
+      <div class="card-amt" id="amt-frame"></div>
+    </div>
+    <div class="card-bd open" id="bd-frame">
+      <div class="row2">
+        <div class="field">
+          <label>Слоёв каркаса</label>
+          <select id="frame-layers" onchange="recalc()">
+            <option value="2">Двухслойный (стандарт)</option>
+            <option value="1">Однослойный</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Монтаж каркаса (сварка), ₽/м²</label>
+          <input type="number" id="frame-mnt" value="1950" min="0" step="50" oninput="recalc()">
+        </div>
+      </div>
+      <!-- 1-й слой (только при двухслойном) -->
+      <div id="frame-layer1-block">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 6px">1-й слой (несущий, вдоль свай)</div>
+        <div class="row2">
+          <div class="field">
+            <label>Профиль 1-го слоя</label>
+            <select id="frame-p1" onchange="recalc()">
+              <option value="40x80">40×80 мм — пролёт до 2 м</option>
+              <option value="40x60">40×60 мм — пролёт до 1.5 м</option>
+              <option value="50x100">50×100 мм — пролёт до 2.3 м</option>
+              <option value="40x40">40×40 мм</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Пог.м 1-го слоя (авто)</label>
+            <input type="number" id="frame-p1-len" value="" min="0" step="1" oninput="recalc()"
+              style="background:#e8f0e8;font-weight:600">
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">↑ авто · можно изменить</div>
+          </div>
+        </div>
+      </div>
+      <!-- 2-й слой (лаги) — всегда: и при однослойном, и при двухслойном -->
+      <div id="frame-layer2-block">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 6px">2-й слой (лаги под доску, шаг 320 мм) <span id="frame-l2-hint" style="font-weight:500;color:var(--gold);text-transform:none;letter-spacing:0"></span></div>
+        <div class="row2">
+          <div class="field">
+            <label>Профиль 2-го слоя</label>
+            <select id="frame-p2" onchange="recalc()">
+              <option value="40x40">40×40 мм</option>
+              <option value="40x20">40×20 мм</option>
+              <option value="40x60">40×60 мм</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Пог.м 2-го слоя (авто)</label>
+            <input type="number" id="frame-p2-len" value="" min="0" step="1" oninput="recalc()"
+              style="background:#e8f0e8;font-weight:600">
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">↑ авто · можно изменить</div>
+          </div>
+        </div>
+      </div>
+      <!-- Уплотнительная лента -->
+      <div class="row2" style="margin-top:8px">
+        <div class="field" style="display:flex;align-items:center;gap:7px">
+          <input type="checkbox" id="cb-lenta" checked onchange="recalc()">
+          <label style="margin:0" for="cb-lenta">Уплотнительная лента</label>
+        </div>
+        <div class="field">
+          <label>Стоимость каркаса</label>
+          <div id="frame-cost-label" style="font-size:13px;font-weight:700;color:var(--gold);padding:8px 10px;background:var(--bg);border-radius:7px">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ НАСТИЛ — шахматный раскрой (из правил GRUNDECK / terrace) ══ -->
+  <div class="card">
+    <div class="card-hd open" id="hd-deck" style="cursor:default;background:#f3f1eb;border-bottom:1px solid var(--line)">
+      <div class="hd-l">
+        <div><div class="card-name">🪵 Настил — шахматный раскрой</div>
+        <div class="card-hint">Доска 142 мм, зазор 3 мм, шаг 145 мм · старт: целая / половина · карта станов</div></div>
+      </div>
+      <div class="card-amt" id="amt-deck"></div>
+    </div>
+    <div class="card-bd open" id="bd-deck" style="display:flex">
+      <div style="background:#eaf4f4;border-left:3px solid #2C3B33;padding:10px 12px;font-size:12px;border-radius:4px;color:#2C3B33;line-height:1.45">
+        <b>Правила GRUNDECK:</b> окантовка с выбранной стороны отнимает <b>142 + 3 = 145 мм</b>.
+        Нечётные ряды — старт целой доски, чётные — с половины. Закупка подтверждается картой раскроя (остатки переиспользуются).
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px">Окантовка настила (внешние стороны):</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button type="button" class="side-btn on" id="deck-es-front" onclick="toggleEdgeSide('front')">⬆ Перед</button>
+          <button type="button" class="side-btn on" id="deck-es-left" onclick="toggleEdgeSide('left')">⬅ Лево</button>
+          <button type="button" class="side-btn on" id="deck-es-right" onclick="toggleEdgeSide('right')">Право ➡</button>
+          <button type="button" class="side-btn" id="deck-es-back" onclick="toggleEdgeSide('back')">⬇ Зад (стена)</button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px" id="deck-edge-hint">—</div>
+      </div>
+      <div id="deckOut" style="margin-top:12px"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Здесь — только палубная доска по карте раскроя. Обрамление, кляймеры и каркас считаются отдельными строками.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-steps" onclick="toggleCard('steps')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-steps" onclick="event.stopPropagation()" onchange="chkCard('steps',this.checked)">
+        <div><div class="card-name">Ступени</div><div class="card-hint">Монтаж + материал — считается сам</div></div>
+      </div>
+      <div class="card-amt" id="amt-steps"></div>
+    </div>
+    <div class="card-bd" id="bd-steps">
+      <div class="row2">
+        <div class="field">
+          <label>Тип ступеней</label>
+          <select id="steps-type" onchange="recalc()">
+            <option value="screw_piles">С металлическим основанием (винт. сваи)</option>
+            <option value="concrete">С металлическим основанием (на бетон)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Длина ступеней, пог.м</label>
+          <input type="number" id="steps-len" value="3" min="0" step="0.5" oninput="recalc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-edge" onclick="toggleCard('edge')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-edge" onclick="event.stopPropagation()" onchange="chkCard('edge',this.checked)">
+        <div><div class="card-name">Обрамление</div><div class="card-hint">Окантовка по периметру ступенчатой доской</div></div>
+      </div>
+      <div class="card-amt" id="amt-edge"></div>
+    </div>
+    <div class="card-bd" id="bd-edge">
+      <!-- Кнопки сторон -->
+      <div>
+        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">С каких сторон обрамление</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <button class="side-btn on" id="es-front" onclick="toggleEdgeSide('front')">
+            <span class="side-icon">↑</span> Перед (лицевая)
+          </button>
+          <button class="side-btn on" id="es-left" onclick="toggleEdgeSide('left')">
+            <span class="side-icon">←</span> Лево
+          </button>
+          <button class="side-btn on" id="es-right" onclick="toggleEdgeSide('right')">
+            <span class="side-icon">→</span> Право
+          </button>
+          <button class="side-btn" id="es-back" onclick="toggleEdgeSide('back')">
+            <span class="side-icon">↓</span> Зад
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px" id="edge-sides-hint">3 стороны выбрано</div>
+      </div>
+      <!-- Длина обрамления — автосчёт + ручная правка -->
+      <div class="row2" style="margin-top:4px">
+        <div class="field">
+          <label>Длина обрамления, пог.м</label>
+          <input type="number" id="edge-len" value="10" min="0" step="0.5" oninput="recalc()"
+            style="background:#e8f0e8;font-weight:600" title="Считается автоматически из сторон — можно изменить вручную">
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">↑ авто из сторон · можно изменить</div>
+        </div>
+        <div class="field">
+          <label>Стоимость раздела</label>
+          <div style="font-size:14px;font-weight:700;color:var(--gold);padding:8px 0" id="amt-edge-detail">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-plinth" onclick="toggleCard('plinth')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-plinth" onclick="event.stopPropagation()" onchange="chkCard('plinth',this.checked)">
+        <div><div class="card-name">Цоколь</div><div class="card-hint">Обшивка боковой части террасы (до 1 м)</div></div>
+      </div>
+      <div class="card-amt" id="amt-plinth"></div>
+    </div>
+    <div class="card-bd" id="bd-plinth">
+      <div class="row2">
+        <div class="field">
+          <label>Высота цоколя</label>
+          <select id="plinth-type" onchange="updPlinthLabel();recalc()">
+            <option value="low">До 1 м</option>
+            <option value="high">Более 1 м</option>
+          </select>
+        </div>
+        <div class="field">
+          <label id="plinth-ql">Количество, пог.м</label>
+          <input type="number" id="plinth-area" value="8" min="0" step="0.5" oninput="recalc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-railing" onclick="toggleCard('railing')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-railing" onclick="event.stopPropagation()" onchange="chkCard('railing',this.checked)">
+        <div><div class="card-name">Ограждения</div><div class="card-hint">Столбы, перила, балясины ДПК — считаются сами</div></div>
+      </div>
+      <div class="card-amt" id="amt-railing"></div>
+    </div>
+    <div class="card-bd" id="bd-railing">
+      <div class="row2">
+        <div class="field">
+          <label>Стиль ограждения</label>
+          <select id="railing-style" onchange="recalc()">
+            <option value="classic">Классика DENPASAR</option>
+            <option value="coex">Co-extrusion ДПК</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Длина ограждений, пог.м</label>
+          <input type="number" id="railing-len" value="8" min="0" step="0.5" oninput="recalc()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-pillar" onclick="toggleCard('pillar')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-pillar" onclick="event.stopPropagation()" onchange="chkCard('pillar',this.checked)">
+        <div><div class="card-name">Обшивка столба</div><div class="card-hint">Несущий столб, обшитый доской</div></div>
+      </div>
+      <div class="card-amt" id="amt-pillar"></div>
+    </div>
+    <div class="card-bd" id="bd-pillar">
+      <div class="field">
+        <label>Высота столба, пог.м</label>
+        <input type="number" id="pillar-len" value="3" min="0" step="0.5" oninput="recalc()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd" id="hd-roof" onclick="toggleCard('roof')">
+      <div class="hd-l">
+        <input type="checkbox" class="cb" id="cb-roof" onclick="event.stopPropagation()" onchange="chkCard('roof',this.checked)">
+        <div><div class="card-name">Кровля</div><div class="card-hint">Под ключ, без доставки</div></div>
+      </div>
+      <div class="card-amt" id="amt-roof"></div>
+    </div>
+    <div class="card-bd" id="bd-roof">
+      <div class="row2">
+        <div class="field">
+          <label>Тип кровли</label>
+          <select id="roof-type" onchange="recalc()">
+            <option value="13700">Монолитный поликарбонат</option>
+            <option value="12200">Профнастил / металлочерепица (с покраской)</option>
+            <option value="12600">Профнастил / металлочерепица (сайдинг)</option>
+            <option value="17000">Гибкая черепица (с покраской)</option>
+            <option value="18900">Гибкая черепица (сайдинг)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Площадь кровли, м²</label>
+          <input type="number" id="roof-area" value="20" min="0" step="0.5" oninput="recalc()">
+        </div>
+      </div>
+      <div class="row2" style="margin-top:8px">
+        <div class="field" style="display:flex;align-items:center;gap:7px">
+          <input type="checkbox" id="cb-roof-client-material" onchange="recalc()">
+          <label style="margin:0" for="cb-roof-client-material">Материал кровли клиент закупает сам (в договор не входит)</label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd open" style="cursor:default;background:#f3f1eb;border-bottom:1px solid var(--line)">
+      <div class="hd-l"><div><div class="card-name">Дополнительное оснащение</div><div class="card-hint">Из каталога Терраса №1</div></div></div>
+    </div>
+    <div class="card-bd open">
+      <div class="addons-grid">
+        <div class="addon-card" id="a-grill" onclick="tAddon('grill',40000)"><div class="addon-emoji">🔥</div><div class="addon-name">Газовый гриль O-GRILL</div><div class="addon-price">от 40 000 ₽</div></div>
+        <div class="addon-card" id="a-kamin" onclick="tAddon('kamin',29700)"><div class="addon-emoji">🪵</div><div class="addon-name">Уличный камин</div><div class="addon-price">29 700 ₽</div></div>
+        <div class="addon-card" id="a-chair" onclick="tAddon('chair',25000)"><div class="addon-emoji">🪑</div><div class="addon-name">Кресло-кокон</div><div class="addon-price">25 000 ₽</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="panel">
+  <div class="p-eye">Прозрачная смета</div>
+  <div id="panel-content"><div class="empty-hint">Включите разделы слева</div></div>
+  <div class="p-div"></div>
+  <div class="p-disc">
+    <label>Расстояние до объекта, км (в одну сторону)</label>
+    <input type="number" id="dist-km" value="15" min="0" step="1" oninput="recalc()">
+  </div>
+  <div class="p-disc" style="display:flex;align-items:center;gap:7px">
+    <input type="checkbox" id="cb-transport-manual" onchange="recalc()">
+    <label style="margin:0" for="cb-transport-manual">Ввести транспорт вручную</label>
+    <input type="number" id="transport-manual" value="8000" min="0" step="500" style="width:90px" oninput="recalc()">
+  </div>
+  <div class="p-disc">
+    <label>Стоимость замера, ₽ (вычитается из итога)</label>
+    <input type="number" id="zamer-cost" value="0" min="0" step="500" oninput="recalc()">
+  </div>
+  <div class="p-disc" style="display:flex;align-items:center;gap:7px">
+    <input type="checkbox" id="cb-material-only" onchange="recalc()">
+    <label style="margin:0" for="cb-material-only">Показать смету «только материал» (без монтажа)</label>
+  </div>
+  <div class="p-div"></div>
+  <div style="margin-bottom:3px">
+    <div style="font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px;cursor:pointer" onclick="document.getElementById('spec-body').style.display=document.getElementById('spec-body').style.display==='none'?'block':'none'">
+      📦 Спецификация материалов ▾
+    </div>
+    <div id="spec-body" style="display:none;background:rgba(255,255,255,.05);border-radius:6px;padding:7px 9px">
+      <div id="spec-content"></div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:3px">
+    <div style="font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px;cursor:pointer"
+         onclick="document.getElementById('deck-layout-body').style.display=document.getElementById('deck-layout-body').style.display==='none'?'block':'none'">
+      🪵 Раскрой доски (шахматная укладка) ▾
+    </div>
+    <div id="deck-layout-body" style="display:block;background:rgba(255,255,255,.05);border-radius:6px;padding:7px 9px">
+      <div id="deck-layout-content"><div style="font-size:10.5px;color:rgba(255,255,255,.3);font-style:italic">Введите размеры — карта раскроя появится здесь</div></div>
+    </div>
+  </div>
+  <div class="p-div"></div>
+  <div class="p-disc">
+    <label>Скидка на материал, %</label>
+    <input type="number" id="disc-mat" value="0" min="0" max="100" oninput="recalc()">
+    <span class="disc-show" id="disc-mat-show"></span>
+  </div>
+  <div class="p-disc">
+    <label>Скидка на работы, %</label>
+    <input type="number" id="disc-work" value="0" min="0" max="100" oninput="recalc()">
+    <span class="disc-show" id="disc-work-show"></span>
+  </div>
+  <div class="p-div"></div>
+  <div class="p-total-label">Итого по проекту</div>
+  <div class="p-total" id="p-total">0 ₽</div>
+  <div class="p-note">Предварительный расчёт. Цена фиксируется в договоре после выезда замерщика.</div>
+  <button class="btn-save" onclick="openSaveModal()">💾 Сохранить клиенту</button>
+  <button class="btn-kp" id="kp-btn" onclick="openKPModal()">Сформировать КП ↗</button>
+</div>
+
+</div>
+</div>
+
+<div class="page" id="page-clients">
+  <div class="page-hdr">
+    <div><div class="page-eye">База клиентов</div><div class="page-title">Клиенты и расчёты</div></div>
+    <button class="btn-primary" onclick="openNewClientModal()">+ Новый клиент</button>
+  </div>
+  <div id="clients-list"></div>
+</div>
+
+<div class="page" id="page-client-detail">
+  <div class="back-link" onclick="showPage('clients')">← Все клиенты</div>
+  <div class="page-hdr">
+    <div>
+      <div class="page-eye">Карточка клиента</div>
+      <div class="page-title" id="detail-name"></div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px" id="detail-meta"></div>
+    </div>
+    <button class="btn-primary" onclick="showPage('calc')">+ Новый расчёт</button>
+  </div>
+  <div id="detail-qlabel" style="font-size:14px;font-weight:600;color:var(--g);margin-bottom:10px"></div>
+  <div id="detail-qlist"></div>
+</div>
+
+<div class="page" id="page-kp">
+  <div class="kp-toolbar no-print">
+    <button class="btn-ghost" onclick="showPage('clients')">← Назад</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;color:#fff;opacity:.7" id="pdf-status"></span>
+      <button class="btn-primary" id="pdf-btn" onclick="downloadPDF()">📄 Скачать PDF</button>
+    </div>
+  </div>
+  <div class="kp-root" id="kp-root"></div>
+</div>
+
+<div class="overlay" id="modal-kp">
+  <div class="modal">
+    <div class="modal-title">Данные для КП</div>
+    <div class="modal-fields">
+      <div class="field"><label>Для кого (имя клиента)</label><input type="text" id="kp-name" placeholder="Ильгиз"></div>
+      <div class="field"><label>Объект</label><input type="text" id="kp-obj" placeholder="пос. Званка, ул. Садовая, 12"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-kp')">Отмена</button>
+      <button class="btn-primary" onclick="doGenKP()">Сформировать</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-save">
+  <div class="modal">
+    <div class="modal-title">Сохранить расчёт</div>
+    <div class="modal-fields">
+      <div class="field"><label>Клиент</label><select id="save-client-sel"></select></div>
+      <div id="nc-block" style="display:none;flex-direction:column;gap:7px">
+        <div class="field"><label>Имя</label><input type="text" id="nc-name" placeholder="Ильгиз"></div>
+        <div class="field"><label>Телефон</label><input type="text" id="nc-phone"></div>
+        <div class="field"><label>Объект</label><input type="text" id="nc-addr" placeholder="пос. Званка"></div>
+        <button class="btn-ghost" style="width:fit-content" onclick="createClientInline()">Создать клиента</button>
+      </div>
+      <button class="btn-ghost" id="toggle-nc" style="width:fit-content" onclick="toggleNC()">+ Новый клиент</button>
+      <div class="field"><label>Название КП</label><input type="text" id="save-title" placeholder="Терраса в пос. Званка"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-save')">Отмена</button>
+      <button class="btn-primary" onclick="saveQuote()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-new-client">
+  <div class="modal">
+    <div class="modal-title">Новый клиент</div>
+    <div class="modal-fields">
+      <div class="field"><label>Имя</label><input type="text" id="mc-name" placeholder="Ильгиз"></div>
+      <div class="field"><label>Телефон</label><input type="text" id="mc-phone"></div>
+      <div class="field"><label>Объект / адрес</label><input type="text" id="mc-addr" placeholder="пос. Званка"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-new-client')">Отмена</button>
+      <button class="btn-primary" onclick="createClient()">Создать</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PRICE = {
+  montazTerrasa: 3900,   // legacy — не используется напрямую
+  montazNastil: 1950,    // Р016 — монтаж настила на готовое основание, ₽/м²
+  montazStupSv: 2950, montazStupGotov: 1250,
+  montazObramlen: 1950, montazCiokol: 2550, montazSvai: 2800,
+  montazStolb: 3800,
+  // Бренды доски — из официального прайс-листа компании «Общая Смета» (март 2026).
+  // dk — материал за м² (основание), sm — материал за пог.м (ступени),
+  // pm — материал за пог.м/м² (цоколь).
+  // ryad/fin — цена рядовой/завершающей доски за пог.м (из официального прайса март 2026)
+  // w — ширина доски (мм) для расчёта кол-ва; step = w/1000 + 0.005 (зазор 5 мм)
+  deck: {
+    grundeck:   { ryad: 993,  fin: 1275, w: 142, name: 'Gründeck Co-extrusion 142×22' },
+    polivan:    { ryad: 811,  fin: 996,  w: 140, name: 'Поливан ДПК 140×20' },
+    terrapol:   { ryad: 1150, fin: 1380, w: 145, name: 'Террапол Co-extrusion 145×22' },
+    easy_woodx: { ryad: 870,  fin: 1050, w: 140, name: 'Изи Декинг Wood-X 140×20' },
+    easy_coex:  { ryad: 1040, fin: 1290, w: 142, name: 'Изи Декинг Co-extrusion 142×22' },
+    sm_decking: { ryad: 880,  fin: 1070, w: 140, name: 'СМ Декинг Robust 140×20' },
+    mpk:        { ryad: 720,  fin: 890,  w: 140, name: 'МПК пустотелая 140×20' },
+  },
+  // Монтаж основания/ступеней/цоколя по типу — из того же официального прайса
+  baseInstall: { screw_piles: 11500, mkt_pipes: 10500, screw_piles_ready: 8100, concrete: 6400, concrete_corners: 5500, adj_supports: 9000, roof_supports: 13925, ready_base: 2550 },
+  baseHint: {
+    screw_piles: 'Открытый грунт, газон, песчаный берег. Отсутствует готовый фундамент.',
+    mkt_pipes: '* НКТ трубы — цена ориентировочная, уточнить у директора. Применяется там, где нет возможности вкрутить винтовые сваи.',
+    screw_piles_ready: '* Готовые сваи — свои сваи уже вкручены клиентом, мы только варим каркас. Цена ориентировочная, уточнить у директора.',
+    concrete: 'Монолитное бетонное, асфальтовое либо иное ровное покрытие. Сетка креплений 1×0,5 м (шаг 1000×500 мм), в каждый узел 0,3 м арматуры.',
+    concrete_corners: 'Уголки к бетону: сетка 1×0,5 м (шаг 1000×500 мм), на каждый узел уголок + анкер. * Цена уголка уточнить у директора.',
+    adj_supports: 'Эксплуатируемая кровля / гидроизоляция — сверлить нельзя. Регулируемые опоры: лаги поперёк доски ≤320 мм, опоры через 600 мм в шахматном порядке.',
+    roof_supports: 'Эксплуатируемая кровля, гидроизоляция «мягкая кровля», система водоотвода. Регулируемые опоры.',
+    ready_base: 'Готовое основание — только укладка настила, без каркаса и свай.',
+  },
+  stepsInstall: { screw_piles: 7200, concrete: 3800 },
+  plinthInstall: { low: 3100, high: 5700 },
+  // Ограждения — простая комбинированная цена за пог.м (монтаж + материал), тоже из прайса
+  railingRate: { classic: 12300, coex: 15200 },
+  klaimStart: 24, klaimRyadPack: 2400,
+  profil4020: 159, profil4060: 275, profil4080: 446, profil8080: 600,
+  armatura: 75, lenta: 100, geotextil: 300,
+  pilePrice: { d57_1500: 1800, d76_2000: 2200, d76_3000: 3800, adj_100: 850, adj_200: 1100, none: 0 },
+  pileHint:  {
+    d57_1500: 'Стандарт. Высота террасы до 0.7м, грунт без скал.',
+    d76_2000: 'Усиленная. Высота 0.7–1.2м или добавляется кровля.',
+    d76_3000: 'Глубокая. Высота >1.2м, слабый/пучинистый грунт.',
+    adj_100: 'Регулируемая опора 100мм. Ровное основание.',
+    adj_200: 'Регулируемая опора 200мм. Перепад до 200мм.',
+    none: 'Сваи не нужны — крепление анкерами или уголками к бетону.',
+  },
+  svaya: 1800, ogolovok: 450,
+  transport: 8000, metizy: 5000,
+  boardSurcharge: 0.07, boardStep: 0.145,
+};
+
+// ─── РАСЧЁТ ОСНОВАНИЯ (схемы директора, октябрь 2026) ─────
+// Все размеры в мм. splitEven: шаг ≤ maxStep, точки на обоих концах, равномерно.
+function splitEven(len, maxStep){
+  const spans = Math.max(1, Math.ceil(len / maxStep - 1e-9));
+  const step = len / spans, pts = [];
+  for (let i = 0; i <= spans; i++) pts.push(i * step);
+  return { spans, step, pts };
+}
+// 1. Винтовые сваи / НКТ / готовые сваи: отступ 200 мм от краёв, шаг ≤ 2000 мм
+function calcPiles(L, W){
+  const OFF = 200, MAX = 2000;
+  const ax = splitEven(Math.max(L - 2*OFF, 1), MAX), ay = splitEven(Math.max(W - 2*OFF, 1), MAX);
+  const points = [];
+  ax.pts.forEach(x => ay.pts.forEach(y => points.push([x + OFF, y + OFF])));
+  return { count: points.length, points, note: `${ax.pts.length}×${ay.pts.length}, шаг ${Math.round(ax.step)}×${Math.round(ay.step)} мм` };
+}
+// 2. Бетон (арматура / уголки): сетка от края, шаг 1000 × 500 мм (1 м × 0,5 м)
+function calcConcrete(L, W){
+  // По длине — шаг ≤ 1000 мм, по ширине — шаг ≤ 500 мм
+  const ax = splitEven(L, 1000), ay = splitEven(W, 500);
+  const points = [];
+  ax.pts.forEach(x => ay.pts.forEach(y => points.push([x, y])));
+  return { count: points.length, points, note: `${ax.pts.length}×${ay.pts.length}, шаг ${Math.round(ax.step)}×${Math.round(ay.step)} мм` };
+}
+// 3. Регулируемые опоры: лаги поперёк доски ≤ 320 мм, опоры через 600 мм,
+//    соседние лаги в шахматку: 0-600-1200-…-край / 0-300-900-…-край
+function calcAdjustable(L, W, dir){
+  const along = dir !== 'wid';                 // доска вдоль длины
+  const spread = along ? L : W, lagLen = along ? W : L;
+  const lags = splitEven(spread, 320), points = [];
+  lags.pts.forEach((pos, i) => {
+    const sup = [0];
+    for (let p = (i % 2 === 0) ? 600 : 300; p < lagLen - 1e-6; p += 600) sup.push(p);
+    sup.push(lagLen);
+    sup.forEach(v => points.push(along ? [pos, v] : [v, pos]));
+  });
+  return { count: points.length, points, lagsMode: true, along, lagPos: lags.pts,
+           note: `${lags.pts.length} лаг, шаг ${Math.round(lags.step)} мм` };
+}
+function foundationScheme(baseType, L, W, dir){
+  if (['screw_piles','mkt_pipes','screw_piles_ready'].includes(baseType)) return calcPiles(L, W);
+  if (['concrete','concrete_corners'].includes(baseType)) return calcConcrete(L, W);
+  if (baseType === 'adj_supports') return calcAdjustable(L, W, dir);
+  return { count: 0, points: [], note: '' };
+}
+function foundationUnit(baseType){
+  if (['concrete','concrete_corners'].includes(baseType)) return { short: 'Узлов', field: 'Узлов крепления, шт' };
+  if (baseType === 'adj_supports') return { short: 'Опор', field: 'Количество опор, шт' };
+  if (baseType === 'ready_base') return { short: 'Свай', field: 'Не требуется' };
+  return { short: 'Свай', field: 'Количество свай, шт' };
+}
+// Пересчёт количества + схема (вызывается при смене размеров, типа, направления доски)
+function updFoundation(){
+  const L = (parseFloat(document.getElementById('p-len').value) || 0) * 1000;
+  const W = (parseFloat(document.getElementById('p-wid').value) || 0) * 1000;
+  const bt = document.getElementById('base-type').value;
+  const u = foundationUnit(bt);
+  const r = (L > 0 && W > 0) ? foundationScheme(bt, L, W, _dir) : { count: 0, points: [] };
+  document.getElementById('pa-piles').textContent = r.count;
+  document.getElementById('pa-piles-label').textContent = u.short;
+  document.getElementById('pile-count-label').textContent = u.field;
+  const pc = document.getElementById('pile-count'); if (pc) pc.value = r.count;
+  drawFoundationScheme(r, L, W, bt);
+}
+function drawFoundationScheme(r, L, W, bt){
+  const el = document.getElementById('base-scheme'); if (!el) return;
+  if (!r.count) { el.innerHTML = ''; return; }
+  const pad = 22, maxW = 360, sc = (maxW - 2*pad) / Math.max(L, W * 1.4);
+  const w = L*sc, h = W*sc, VW = w + 2*pad, VH = h + 2*pad;
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" style="width:100%;max-width:${VW}px;height:auto;display:block">`;
+  s += `<rect x="${pad}" y="${pad}" width="${w}" height="${h}" fill="none" stroke="#2C3B33" stroke-width="1.5"/>`;
+  if (r.lagsMode) {
+    r.lagPos.forEach(v => s += r.along
+      ? `<line x1="${pad+v*sc}" y1="${pad}" x2="${pad+v*sc}" y2="${pad+h}" stroke="#bbb" stroke-width=".7"/>`
+      : `<line x1="${pad}" y1="${pad+v*sc}" x2="${pad+w}" y2="${pad+v*sc}" stroke="#bbb" stroke-width=".7"/>`);
+  } else {
+    [...new Set(r.points.map(p=>p[0]))].forEach(x => s += `<line x1="${pad+x*sc}" y1="${pad-6}" x2="${pad+x*sc}" y2="${pad+h+6}" stroke="#bbb" stroke-dasharray="3 3"/>`);
+    [...new Set(r.points.map(p=>p[1]))].forEach(y => s += `<line x1="${pad-6}" y1="${pad+y*sc}" x2="${pad+w+6}" y2="${pad+y*sc}" stroke="#bbb" stroke-dasharray="3 3"/>`);
+  }
+  const rad = r.lagsMode ? Math.max(1.5, Math.min(3, sc*40)) : 4;
+  r.points.forEach(([x,y]) => s += ['concrete','concrete_corners'].includes(bt)
+    ? `<path d="M${pad+x*sc-3.5} ${pad+y*sc-3.5}l7 7M${pad+x*sc+3.5} ${pad+y*sc-3.5}l-7 7" stroke="#C4943A" stroke-width="1.8"/>`
+    : `<circle cx="${pad+x*sc}" cy="${pad+y*sc}" r="${rad}" fill="#fff" stroke="#C4943A" stroke-width="1.6"/>`);
+  s += `<text x="${pad+w/2}" y="${VH-4}" text-anchor="middle" font-size="10" fill="#6b6657">${(L/1000).toFixed(1)} м</text>`;
+  s += `<text x="9" y="${pad+h/2}" text-anchor="middle" font-size="10" fill="#6b6657" transform="rotate(-90 9 ${pad+h/2})">${(W/1000).toFixed(1)} м</text></svg>`;
+  let formula = '';
+  if (['screw_piles','mkt_pipes','screw_piles_ready'].includes(bt)) {
+    formula = `Правило свайного поля: отступ оси 200 мм от края · поле ${(L-400)/10|0}0×${(W-400)/10|0}0 мм · шаг ≤ 2000 мм`;
+  } else if (['concrete','concrete_corners'].includes(bt)) {
+    formula = `Анкерная сетка (анкеры/уголки): шаг 1000 × 500 мм (1 м × 0,5 м) · узлы от края`;
+  } else if (bt === 'adj_supports') {
+    formula = `Рег. опоры: лаги ≤ 320 мм поперёк доски · опоры через 600 мм в шахматку`;
+  }
+  el.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:2px">Схема: <b>${r.count}</b> шт · ${r.note}</div>`
+    + (formula ? `<div style="font-size:9.5px;color:#8a8473;margin-bottom:4px">${formula}</div>` : '')
+    + s;
+}
+// Подбор вида сваи/опоры под тип основания
+function syncPileType(){
+  const bt = document.getElementById('base-type').value;
+  const sel = document.getElementById('pile-type'); if (!sel) return;
+  const v = sel.value, isAdj = v.startsWith('adj_');
+  if (['screw_piles','mkt_pipes'].includes(bt)) { if (isAdj || v === 'none') sel.value = 'd57_1500'; }
+  else if (bt === 'adj_supports') { if (!isAdj) sel.value = 'adj_100'; }
+  else sel.value = 'none';   // готовые сваи клиента, бетон, готовое основание
+  updPileHint();
+}
+
+// ─── ПАРАМЕТРЫ ОБЪЕКТА ────────────────────────────────────
+function onParamsChange(){
+  const L = parseFloat(document.getElementById('p-len').value) || 0;
+  const W = parseFloat(document.getElementById('p-wid').value) || 0;
+  const H = parseFloat(document.getElementById('p-hgt').value) || 0;
+
+  // Площадь
+  const area = L * W;
+  document.getElementById('pa-area').textContent = area.toFixed(1);
+
+
+  // Ряды досок в цоколь = высота / шаг (ширина доски 140мм = 0.145м с зазором)
+  const plinthRows = Math.ceil((H - 0.022) / 0.145);
+  document.getElementById('pa-plinth-rows').textContent = Math.max(1, plinthRows);
+
+  // Ступени = высота / 0.15м (стандартная высота ступени)
+  const steps = Math.ceil(H / 0.15);
+  document.getElementById('pa-steps').textContent = Math.max(0, steps);
+
+  // Автозаполняем поле площади в разделе «Основание»
+  const areaInput = document.getElementById('base-area');
+  if (areaInput) areaInput.value = area > 0 ? area.toFixed(1) : '';
+
+  // Количество свай / узлов / опор — по схеме выбранного основания
+  updFoundation();
+
+  // Обновляем стороны обрамления (длина меняется при смене размеров)
+  updateEdgeSides();
+
+  // Автозаполняем длину ступеней (ширина террасы по умолчанию)
+  const stepsLenInput = document.getElementById('steps-len');
+  if (stepsLenInput && W > 0) stepsLenInput.value = W.toFixed(1);
+
+  // Пересчёт калькулятора
+  recalc();
+}
+
+function setDir(dir){
+  _dir = dir;
+  document.getElementById('dir-len').classList.toggle('active', dir === 'len');
+  document.getElementById('dir-wid').classList.toggle('active', dir === 'wid');
+  updFoundation();
+  recalc();
+}
+
+function toggleEdgeSide(side){
+  _edgeSides[side] = !_edgeSides[side];
+  const on = _edgeSides[side];
+  const a = document.getElementById('es-'+side);
+  const b = document.getElementById('deck-es-'+side);
+  if (a) a.classList.toggle('on', on);
+  if (b) b.classList.toggle('on', on);
+  updateEdgeSides();
+  recalc();
+}
+
+function updateEdgeSides(){
+  // Синхронизация кнопок в блоках Обрамление и Настил
+  ['front','left','right','back'].forEach(side => {
+    const on = !!_edgeSides[side];
+    const a = document.getElementById('es-'+side);
+    const b = document.getElementById('deck-es-'+side);
+    if (a) a.classList.toggle('on', on);
+    if (b) b.classList.toggle('on', on);
+  });
+  const L = parseFloat(document.getElementById('p-len').value) || 0;
+  const W = parseFloat(document.getElementById('p-wid').value) || 0;
+  const edgeLen = (_edgeSides.front ? W : 0) + (_edgeSides.back ? W : 0)
+                + (_edgeSides.left ? L : 0) + (_edgeSides.right ? L : 0);
+
+  // Обновляем подсчёт сторон
+  const count = Object.values(_edgeSides).filter(Boolean).length;
+  const hintEl = document.getElementById('edge-sides-hint');
+  if (hintEl) hintEl.textContent = count + ' ' +
+    (count===1?'сторона':count<5?'стороны':'сторон') + ' выбрано';
+
+  // Авто-заполняем длину обрамления
+  const edgeInput = document.getElementById('edge-len');
+  if (edgeInput) edgeInput.value = edgeLen > 0 ? edgeLen.toFixed(1) : '';
+
+  // Подсказка в карточке параметров
+  const hintTop = document.getElementById('edge-len-hint');
+  if (hintTop) {
+    const names = [];
+    if (_edgeSides.front) names.push('Перед');
+    if (_edgeSides.left)  names.push('Лево');
+    if (_edgeSides.right) names.push('Право');
+    if (_edgeSides.back)  names.push('Зад');
+    hintTop.textContent = edgeLen > 0
+      ? edgeLen.toFixed(1) + ' пм (' + names.join(', ') + ')'
+      : 'не выбрано';
+  }
+}
+
+function updPileHint(){
+  const pt = document.getElementById('pile-type')?.value || '';
+  const hint = PRICE.pileHint[pt] || '';
+  const hintEl = document.getElementById('pile-hint');
+  if (hintEl) hintEl.textContent = hint;
+  // Скрываем оголовок если нет свай
+  const ogRow = document.getElementById('pile-ogolovok-row');
+  if (ogRow) ogRow.style.display = (pt === 'none' || pt.startsWith('adj_')) ? 'none' : '';
+}
+
+function updBaseHint(){
+  const bt=document.getElementById('base-type').value;
+  document.getElementById('base-fhint').textContent = PRICE.baseHint[bt] || '';
+}
+function updPlinthLabel(){
+  const v=document.getElementById('plinth-type').value;
+  document.getElementById('plinth-ql').textContent = v==='low' ? 'Количество, пог.м' : 'Площадь, м²';
+}
+
+const SECTION_NAMES = {
+  base: 'Монтаж террасной доски со сваркой металлического каркаса',
+  steps: 'Монтаж ступеней',
+  edge: 'Монтаж обрамления (окантовка по периметру)',
+  plinth: 'Монтаж боковой части террасы (цоколь)',
+  railing: 'Монтаж ограждений',
+  pillar: 'Обшивка столба',
+  roof: 'Монтаж кровли',
+};
+
+const EN = {base:true, frame:true, steps:false, edge:false, plinth:false, railing:false, pillar:false, roof:false};
+let _dir = 'len'; // направление доски: 'len' или 'wid'
+let _edgeSides = {front:true, left:true, right:true, back:false}; // стороны обрамления
+let _spec = {}; // спецификация материалов — заполняется в recalc()
+const ADS = {};
+let _result = null;
+let _currentClientId = null;
+
+function fmt(n){ return Math.round(n||0).toLocaleString('ru-RU') + ' ₽'; }
+function fmtNum(n){ return Math.round(n||0).toLocaleString('ru-RU'); }
+function gv(id){ return parseFloat(document.getElementById(id)?.value) || 0; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ===== РАСЧЁТ НАСТИЛА GRUNDECK (блоки + шахматка, как в ручном расчёте) ===== */
+/* Правила:
+   1) Окантовка −145 мм с выбранных сторон → рабочее поле
+   2) Площадь монтажа = только рабочее поле (обрамление отдельно, в п.м.)
+   3) Рядов = ceil(fieldW / 145)
+   4) Блоков = ряды / 2 (допускается .5)
+   5) Шахматка: нечёт — старт целой, чёт — старт половины
+   6) В блоке: целые + половины (в долях 4м) + торцы пакуем в 4м/3м
+   7) Закупка = ceil(на_блок × блоков)
+*/
+function calcDeck(cfg){
+  const BW = cfg.boardWidth || 142;
+  const GAP = 3;
+  const PITCH = BW + GAP;       // 145
+  const EDGE = BW + GAP;        // 145
+  const STOCK = cfg.stock || 4000;
+  const HALF = STOCK / 2;
+  const allow3 = cfg.allow3m !== false; // по умолчанию можно подмешивать 3м
+  const warnings = [];
+  const ed = cfg.edging || {};
+
+  let rowLen, fieldW;
+  if (cfg.direction === 'length' || cfg.direction === 'len') {
+    rowLen  = cfg.length - (ed.left ? EDGE : 0) - (ed.right ? EDGE : 0);
+    fieldW  = cfg.width  - (ed.front ? EDGE : 0) - (ed.back ? EDGE : 0);
+  } else {
+    rowLen  = cfg.width  - (ed.front ? EDGE : 0) - (ed.back ? EDGE : 0);
+    fieldW  = cfg.length - (ed.left ? EDGE : 0) - (ed.right ? EDGE : 0);
+  }
+  if (rowLen <= 0 || fieldW <= 0)
+    throw new Error('После окантовки рабочее поле ≤ 0. Проверьте стороны.');
+
+  const rowsN = Math.ceil(fieldW / PITCH);
+  const lastW = +(fieldW - (rowsN - 1) * PITCH).toFixed(2);
+  if (lastW < 60) warnings.push('Последний ряд узкий: ' + lastW + ' мм — согласуйте примыкание.');
+  const blocks = rowsN / 2; // как в ручном: 45/2 = 22.5
+
+  // --- куски одного ряда ---
+  function rowPieces(len, start, maxStock){
+    const pieces = [];
+    let used = 0, first = true, guard = 0;
+    while (guard++ < 100){
+      let take;
+      if (first){ take = Math.min(start, len); first = false; }
+      else {
+        const free = len - used - GAP;
+        if (free <= 0.001) break;
+        take = Math.min(maxStock, free);
+      }
+      pieces.push(+take.toFixed(2));
+      used += (pieces.length === 1 ? 0 : GAP) + take;
+      if (used >= len - 0.05) break;
+    }
+    const total = pieces.reduce((a,b)=>a+b,0) + GAP * Math.max(0, pieces.length - 1);
+    if (Math.abs(total - len) > 0.1 && pieces.length)
+      pieces[pieces.length - 1] = +(pieces[pieces.length - 1] + (len - total)).toFixed(2);
+    return pieces;
+  }
+
+  // --- упаковка торцов в заготовки ---
+  function packEnds(ends, stocks){
+    const needs = ends.filter(e => e > 0.5).sort((a,b)=>b-a);
+    const boards = [];
+    needs.forEach(need => {
+      let best = null;
+      boards.forEach((b,i) => {
+        if (b.left + 1e-6 >= need){
+          const waste = b.left - need;
+          if (!best || waste < best.waste) best = {i, waste};
+        }
+      });
+      if (best){ boards[best.i].left = +(boards[best.i].left - need).toFixed(2); return; }
+      const fit = stocks.filter(s => s + 1e-6 >= need);
+      const s = (fit.length ? fit : [Math.max(...stocks)])
+        .sort((a,b) => (a - need) - (b - need) || a - b)[0];
+      boards.push({ stock: s, left: +(s - need).toFixed(2) });
+    });
+    const counts = {};
+    boards.forEach(b => { counts[b.stock] = (counts[b.stock] || 0) + 1; });
+    return counts;
+  }
+
+  // --- состав одного блока (нечёт + чёт) ---
+  function perBlockCount(odd, even){
+    const half = STOCK / 2;
+    const all = odd.concat(even);
+    let fulls = 0, halves = 0;
+    const ends = [];
+    all.forEach(p => {
+      if (Math.abs(p - STOCK) < 1) fulls++;
+      else if (Math.abs(p - half) < 1) halves++;
+      else ends.push(p);
+    });
+    const stocks = allow3 ? [STOCK, 3000].filter((v,i,a)=>a.indexOf(v)===i).sort((a,b)=>b-a) : [STOCK];
+    const endCounts = packEnds(ends, stocks);
+    const result = {};
+    const primaryBoards = fulls + halves / 2; // доли 4м, как на листке (1.5)
+    if (primaryBoards) result[STOCK] = (result[STOCK] || 0) + primaryBoards;
+    Object.keys(endCounts).forEach(s => {
+      result[s] = (result[s] || 0) + endCounts[s];
+    });
+    return result;
+  }
+
+  let odd, even, perBlock, purchase = {};
+  const rows = [];
+
+  if (STOCK > rowLen) {
+    // ряд короче заготовки — одна доска на ряд
+    odd = [rowLen]; even = [rowLen];
+    for (let i = 1; i <= rowsN; i++){
+      rows.push({ n:i, startKind: i%2 ? 'целая' : 'половина', start: rowLen,
+        width: i===rowsN ? lastW : BW, pieces:[rowLen], ends:[] });
+    }
+    const stocks = allow3 ? [STOCK, 3000].sort((a,b)=>b-a) : [STOCK];
+    perBlock = packEnds([rowLen, rowLen], stocks);
+  } else {
+    odd = rowPieces(rowLen, STOCK, STOCK);
+    even = rowPieces(rowLen, HALF, STOCK);
+    perBlock = perBlockCount(odd, even);
+    for (let i = 1; i <= rowsN; i++){
+      const isOdd = i % 2 === 1;
+      const pcs = isOdd ? odd.slice() : even.slice();
+      rows.push({
+        n:i, startKind: isOdd ? 'целая' : 'половина',
+        start: isOdd ? STOCK : HALF,
+        width: i===rowsN ? lastW : BW,
+        pieces: pcs,
+        ends: pcs.slice(1).filter(p => p < STOCK - 1)
+      });
+    }
+  }
+
+  // закупка = ceil(на_блок × блоков)
+  Object.keys(perBlock).forEach(s => {
+    purchase[s] = Math.ceil(perBlock[s] * blocks - 1e-9);
+  });
+
+  // карта станов (для отображения) — разворачиваем закупку в список
+  const boards = [];
+  let seq = 0;
+  Object.keys(purchase).sort((a,b)=>b-a).forEach(s => {
+    for (let i = 0; i < purchase[s]; i++){
+      boards.push({ id: ++seq, stock: +s, purpose: 'Заготовка ' + s + ' мм', cuts: [], left: +s });
+    }
+  });
+
+  const linear = Object.keys(purchase).reduce((sum,s) => sum + purchase[s] * (+s) / 1000, 0);
+  const cost = linear * (cfg.price || 0);
+  const purchased = boards.length;
+  const area = +(rowLen * fieldW / 1e6).toFixed(3);
+
+  return {
+    rowLen: +rowLen.toFixed(2), fieldW: +fieldW.toFixed(2), rowsN, lastW, blocks,
+    rows, boards, odd, even, perBlock, purchase,
+    purchased, linear: +linear.toFixed(2), cost, area,
+    warnings, stock: STOCK, bw: BW, gap: GAP, allow3,
+    reuseSavedM: 0
+  };
+}
+
+function deckHTML(r, theme) {
+  const dark = theme === 'dark';
+  const c = dark
+    ? { muted:'rgba(255,255,255,.7)', strong:'#efeae0', gold:'var(--gold2)', ok:'#a0d8a0', warn:'#f0c080',
+        th:'rgba(255,255,255,.45)', td:'rgba(255,255,255,.85)', border:'rgba(255,255,255,.15)', bg:'transparent' }
+    : { muted:'#5b6b7c', strong:'#22303f', gold:'#2C3B33', ok:'#2f855a', warn:'#7a5b12',
+        th:'#5b6b7c', td:'#22303f', border:'#dde3ea', bg:'#f2f5f8' };
+
+  // строка закупки по длинам
+  const purchParts = Object.keys(r.purchase || {}).sort((a,b)=>b-a).map(s =>
+    r.purchase[s] + ' шт × ' + s + ' мм').join(' + ') || (r.purchased + ' шт');
+
+  let h = '<div style="font-size:12px;color:'+c.muted+';line-height:1.65;margin-bottom:8px;'
+    + (dark ? '' : 'background:#eaf4f4;border-left:3px solid #2c7a7b;padding:10px 12px;border-radius:4px') + '">';
+  h += '<b style="color:'+c.gold+'">Как считается (блоки + шахматка)</b><br>';
+  h += '1. Рабочая длина ряда: <b style="color:'+c.strong+'">' + fmtNum(r.rowLen) + '</b> мм<br>';
+  h += '2. Рабочая ширина поля: <b style="color:'+c.strong+'">' + fmtNum(r.fieldW) + '</b> мм<br>';
+  h += '3. Площадь монтажа настила: <b style="color:'+c.strong+'">' + (r.area != null ? r.area : (r.rowLen*r.fieldW/1e6).toFixed(3)) + ' м²</b><br>';
+  h += '4. Рядов: <b style="color:'+c.strong+'">' + r.rowsN + '</b> <span style="opacity:.7">(ceil '+fmtNum(r.fieldW)+' / 145)</span>';
+  if (r.lastW) h += ' · последний: <b>' + fmtNum(r.lastW) + '</b> мм';
+  h += '<br>5. Блоков: <b style="color:'+c.strong+'">' + r.blocks + '</b> <span style="opacity:.7">(' + r.rowsN + ' / 2)</span><br>';
+  if (r.odd && r.even) {
+    h += '6. Нечётный ряд: <b style="color:'+c.strong+'">' + r.odd.join(' + ') + '</b><br>';
+    h += '7. Чётный ряд: <b style="color:'+c.strong+'">' + r.even.join(' + ') + '</b><br>';
+  }
+  if (r.perBlock) {
+    const pb = Object.keys(r.perBlock).sort((a,b)=>b-a).map(s => r.perBlock[s] + ' × ' + s + ' мм').join(' + ');
+    h += '8. На 1 блок: <b style="color:'+c.strong+'">' + pb + '</b><br>';
+  }
+  h += '9. Закупка: <b style="color:'+c.gold+'">' + purchParts + ' = ' + r.linear.toFixed(1) + ' пог.м</b><br>';
+  h += 'Стоимость доски: <b style="color:'+c.gold+'">' + fmt(r.cost) + '</b>';
+  h += '</div>';
+
+  (r.warnings || []).forEach(w => {
+    h += '<div style="font-size:11px;color:'+c.warn+';margin:4px 0'
+      + (dark?'':';background:#fff6e0;border-left:3px solid #d69e2e;padding:8px;border-radius:4px')
+      + '">⚠ ' + esc(w) + '</div>';
+  });
+
+  // Карта рядов
+  h += '<details open style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:'+c.gold+'">Карта рядов (' + r.rowsN + ')</summary>';
+  h += '<div style="max-height:'+(dark?'160':'320')+'px;overflow:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse;font-size:11px;color:'+c.td+'">';
+  h += '<tr style="color:'+c.th+'">'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Ряд</th>'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Старт</th>'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Ширина</th>'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Элементы (стык 3 мм)</th></tr>';
+  (r.rows || []).forEach(x => {
+    h += '<tr><td style="padding:5px;border:1px solid '+c.border+'">' + x.n + '</td>'
+      + '<td style="padding:5px;border:1px solid '+c.border+'">' + x.startKind + '</td>'
+      + '<td style="padding:5px;border:1px solid '+c.border+'">' + fmtNum(x.width) + '</td>'
+      + '<td style="padding:5px;border:1px solid '+c.border+';font-family:monospace">' + x.pieces.join(' + ') + '</td></tr>';
+  });
+  h += '</table></div></details>';
+
+  // Карта раскроя / закупка
+  h += '<details open style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:'+c.gold+'">Закупка доски — ' + r.purchased + ' шт</summary>';
+  h += '<div style="margin-top:6px"><table style="width:100%;border-collapse:collapse;font-size:11px;color:'+c.td+'">';
+  h += '<tr style="color:'+c.th+'">'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Длина</th>'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Кол-во</th>'
+    + '<th style="text-align:left;padding:5px;border:1px solid '+c.border+';background:'+c.bg+'">Пог.м</th></tr>';
+  Object.keys(r.purchase || {}).sort((a,b)=>b-a).forEach(s => {
+    const n = r.purchase[s];
+    h += '<tr><td style="padding:5px;border:1px solid '+c.border+'">' + s + ' мм</td>'
+      + '<td style="padding:5px;border:1px solid '+c.border+'"><b>' + n + '</b> шт</td>'
+      + '<td style="padding:5px;border:1px solid '+c.border+'">' + (n * s / 1000).toFixed(1) + '</td></tr>';
+  });
+  h += '<tr><td style="padding:5px;border:1px solid '+c.border+'" colspan="2"><b>Итого</b></td>'
+    + '<td style="padding:5px;border:1px solid '+c.border+'"><b>' + r.linear.toFixed(1) + ' пог.м</b></td></tr>';
+  h += '</table></div></details>';
+  return h;
+}
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  if(id==='calc') document.querySelectorAll('.ntab')[0].classList.add('active');
+  if(['clients','client-detail'].includes(id)) document.querySelectorAll('.ntab')[1].classList.add('active');
+  if(id==='clients') renderClients();
+}
+
+function toggleCard(s){
+  EN[s] = !EN[s];
+  document.getElementById('cb-'+s).checked = EN[s];
+  document.getElementById('bd-'+s).classList.toggle('open', EN[s]);
+  document.getElementById('hd-'+s).classList.toggle('open', EN[s]);
+  recalc();
+}
+function chkCard(s, v){
+  EN[s] = v;
+  document.getElementById('bd-'+s).classList.toggle('open', v);
+  document.getElementById('hd-'+s).classList.toggle('open', v);
+  recalc();
+}
+function tAddon(id, price){
+  ADS[id] ? delete ADS[id] : (ADS[id] = price);
+  document.getElementById('a-'+id).classList.toggle('on', !!ADS[id]);
+  recalc();
+}
+
+function recalc(){
+  const deckId = document.getElementById('deckType').value;
+  const deck = PRICE.deck[deckId];
+  const panelLines = [];
+  let workSum = 0, boardMatSum = 0, otherMatSum = 0;
+  // Спецификация материалов — обнуляем перед каждым пересчётом
+  _spec = { boardRyad:0, boardFin:0, klaimRyad:0, klaimStart:0, profil4020:0, profil4060:0, profil4080:0, lenta:0,
+            frameP1Len:0, frameP2Len:0, frameP1Price:0, frameP2Price:0, frameLenta:0, rebarM:0, nodes:0, angles:0 };
+
+  // ═══ НАСТИЛ: всегда считаем и показываем карту (независимо от галочки «Основание») ═══
+  const L0 = gv('p-len'), W0 = gv('p-wid');
+  const boardLenMm0 = parseInt(document.getElementById('deck-len')?.value) || 4000;
+  const boardWmm0 = deck.w || 142;
+  let _deckResult = null, _deckErr = null;
+  let _boardsEdge = 0, _klaimRyadPacks = 0, _klaimStartCount = 0, _boardMat = 0, _klaimMat = 0;
+  let _boardRyadPogm = 0, _boardsPurchased = 0, _nRows = 0;
+
+  if (L0 > 0 && W0 > 0) {
+    try {
+      const edgeFront = _edgeSides.front, edgeBack = _edgeSides.back;
+      const edgeLeft  = _edgeSides.left,  edgeRight = _edgeSides.right;
+      _deckResult = calcDeck({
+        length: Math.round(L0 * 1000),
+        width:  Math.round(W0 * 1000),
+        direction: _dir === 'wid' ? 'width' : 'length',
+        stock: boardLenMm0,
+        price: deck.ryad || 0,
+        boardWidth: boardWmm0,
+        allow3m: true,
+        edging: { front: edgeFront, back: edgeBack, left: edgeLeft, right: edgeRight }
+      });
+      _boardsPurchased = _deckResult.purchased;
+      _nRows = _deckResult.rowsN;
+      _boardRyadPogm = _deckResult.linear;
+      const L_mm = Math.round(L0 * 1000), W_mm = Math.round(W0 * 1000);
+      const edgeTotalMm = (edgeFront ? L_mm : 0) + (edgeBack ? L_mm : 0)
+                        + (edgeLeft  ? W_mm : 0) + (edgeRight ? W_mm : 0);
+      // Завершающая доска на обрамление — отдельно от рядовой
+      _boardsEdge = edgeTotalMm > 0 ? Math.ceil(edgeTotalMm / boardLenMm0) : 0;
+      _klaimRyadPacks  = Math.ceil(_boardRyadPogm / (0.33 * 100));
+      _klaimStartCount = _nRows * 2;
+      _klaimMat = _klaimRyadPacks * (PRICE.klaimRyadPack||0) + _klaimStartCount * (PRICE.klaimStart||0);
+      const boardRyadPrice = (deck.ryad || 0) * (boardLenMm0 / 1000);
+      const boardFinPrice  = (deck.fin  || 0) * (boardLenMm0 / 1000);
+      _boardMat = _boardsPurchased * boardRyadPrice + _boardsEdge * boardFinPrice;
+    } catch (e) {
+      console.warn('Раскрой настила:', e.message);
+      _deckErr = e.message;
+      _deckResult = null;
+    }
+  }
+
+  // Рендер карты всегда
+  {
+    const sideNames = [];
+    if (_edgeSides.front) sideNames.push('Перед');
+    if (_edgeSides.back)  sideNames.push('Зад');
+    if (_edgeSides.left)  sideNames.push('Лево');
+    if (_edgeSides.right) sideNames.push('Право');
+    const dirLabel = _dir === 'wid' ? 'вдоль ширины ↓' : 'вдоль длины →';
+    const deckHint = document.getElementById('deck-edge-hint');
+    if (deckHint) deckHint.textContent = (sideNames.length ? sideNames.join(', ') : 'не выбрано')
+      + ' · направление: ' + dirLabel;
+    const deckOut = document.getElementById('deckOut');
+    const dlEl = document.getElementById('deck-layout-content');
+    const amtDeck = document.getElementById('amt-deck');
+    if (_deckResult) {
+      if (deckOut) deckOut.innerHTML = deckHTML(_deckResult, 'light');
+      if (dlEl) {
+        let html = '<div style="font-size:10px;color:rgba(255,255,255,.55);margin-bottom:6px;line-height:1.5">';
+        html += '<b style="color:var(--gold2)">GRUNDECK · ' + dirLabel + '</b><br>';
+        html += 'Окантовка: ' + (sideNames.join(', ') || 'нет') + ' (−' + (boardWmm0 + 3) + ' мм)<br>';
+        if (_boardsEdge > 0) html += 'Завершающая: <b style="color:#efeae0">' + _boardsEdge + ' шт</b> · ';
+        html += 'Кляймеры: ' + _klaimRyadPacks + ' уп. + ' + _klaimStartCount + ' старт.</div>';
+        html += deckHTML(_deckResult, 'dark');
+        dlEl.innerHTML = html;
+      }
+      if (amtDeck) amtDeck.textContent = fmt(_deckResult.cost);
+    } else {
+      const msg = _deckErr || 'Введите длину и ширину террасы';
+      if (deckOut) deckOut.innerHTML = '<div style="background:#fff6e0;border-left:3px solid #d69e2e;padding:10px;font-size:12px;border-radius:4px;color:#7a5b12">⚠ ' + esc(msg) + '</div>';
+      if (dlEl) dlEl.innerHTML = '<div style="font-size:10.5px;color:#f0c080">' + esc(msg) + '</div>';
+      if (amtDeck) amtDeck.textContent = '';
+    }
+  }
+
+  let baseSum = 0;
+  if (EN.base) {
+    const area = gv('base-area');
+    const baseType = document.getElementById('base-type').value;
+    // --- Монтаж основания: логика по типу из PDF ---
+    // Для свай/НКТ/готовых: монтаж считается через сваи (pileMont ниже), здесь 0
+    // Для анкеровки/уголков: количество точек крепления × цена монтажа
+    // Для рег.опор: количество опор × цена монтажа
+    // Для готового основания: только настил (входит в каркас/настил)
+    const L = gv('p-len') || Math.sqrt(area * 1.5);
+    const W = gv('p-wid') || area / L;
+    let baseMont = 0, rebarM = 0, rebarMat = 0;
+    // Количество узлов/опор — из поля (автосчёт по схеме, можно поправить вручную)
+    const nodeCount = parseInt(document.getElementById('pile-count')?.value) || 0;
+    if (baseType === 'concrete') {
+      // Бетон, арматура: сетка 1000×500 мм; арматура = узлы × 0,3 м, округление вверх
+      rebarM   = Math.ceil(nodeCount * 0.3 - 1e-9);
+      rebarMat = rebarM * PRICE.armatura;
+      baseMont = nodeCount * 460; // монтаж узла
+      _spec.rebarM = rebarM; _spec.nodes = nodeCount;
+    } else if (baseType === 'concrete_corners') {
+      // Бетон, уголки: уголок + анкер на каждый узел (цена уголка — уточнить)
+      baseMont = nodeCount * 200;
+      _spec.angles = nodeCount;
+    } else if (baseType === 'adj_supports') {
+      // Рег. опоры: шахматка 600/300 по лагам ≤320 мм; монтаж опоры (Р003)
+      baseMont = nodeCount * 460;
+    } else if (baseType === 'ready_base') {
+      baseMont = 0; // только настил — считается в блоке каркас
+    } else {
+      // screw_piles, mkt_pipes, screw_piles_ready — монтаж через сваи
+      baseMont = 0;
+    }
+    const mont = baseMont;
+
+    // --- Доска: используем уже посчитанный раскрой (_deckResult) ---
+    const boardLenMm  = boardLenMm0;
+    const boardWmm    = boardWmm0;
+    const L_mm = Math.round(L * 1000);
+    const W_mm = Math.round(W * 1000);
+    const edgeFront = _edgeSides.front, edgeBack = _edgeSides.back;
+    const edgeLeft  = _edgeSides.left,  edgeRight = _edgeSides.right;
+
+    let deckResult = _deckResult;
+    let boardsPurchased = _boardsPurchased, boardsEdge = _boardsEdge, nRows = _nRows;
+    let boardMat = _boardMat, klaimMat = _klaimMat, klaimRyadPacks = _klaimRyadPacks, klaimStartCount = _klaimStartCount;
+    let boardRyadPogm = _boardRyadPogm, boardFinPogm = boardsEdge * (boardLenMm / 1000);
+
+    // (карта уже отрисована выше, вне EN.base)
+
+    // --- Профиль и лента больше НЕ считаются здесь — они в блоке Каркас ---
+    const profilMat = 0;
+    const lentaMat  = 0;
+    let geotextilMat = 0;
+    if (document.getElementById('cb-geotextil').checked) {
+      geotextilMat = gv('geotextil-area') * PRICE.geotextil;
+    }
+    // --- Сваи / опоры ---
+    const pileType  = document.getElementById('pile-type')?.value || 'none';
+    const pileCount = parseInt(document.getElementById('pile-count')?.value) || 0;
+    const pileUnitPrice = PRICE.pilePrice[pileType] || 0;
+    const withOgolovok  = document.getElementById('cb-ogolovok')?.checked && pileType !== 'none';
+    const pileMat   = pileCount * pileUnitPrice;
+    const ogolovMat = withOgolovok ? pileCount * PRICE.ogolovok : 0;
+    const pileMont  = (pileType !== 'none' && !pileType.startsWith('adj_')) ? pileCount * PRICE.montazSvai : 0;
+    const pileTotal = pileMat + ogolovMat + pileMont;
+    // Показываем стоимость свай в блоке
+    const pileCostEl = document.getElementById('pile-cost-label');
+    if (pileCostEl) pileCostEl.textContent = pileType !== 'none' ? fmt(pileTotal) : '—';
+    // Добавляем сваи в спецификацию
+    if (pileType !== 'none') {
+      _spec.pileType  = pileType;
+      _spec.pileCount = pileCount;
+      _spec.pileTotal = pileTotal;
+    }
+
+    // Монтаж настила (Р016) — отдельно от монтажа каркаса
+    const nastilMont = area * PRICE.montazNastil;
+
+    boardMatSum += boardMat;
+    otherMatSum += klaimMat + profilMat + lentaMat + geotextilMat + pileMat + ogolovMat + rebarMat;
+    workSum += mont + pileMont + nastilMont;
+    baseSum = mont + nastilMont + boardMat + klaimMat + profilMat + lentaMat + geotextilMat + pileTotal + rebarMat;
+
+    _spec.boardRyad  = ((_spec.boardRyad  || 0) + boardRyadPogm);
+    _spec.boardFin   = ((_spec.boardFin   || 0) + boardFinPogm);
+    _spec.klaimRyad  = ((_spec.klaimRyad  || 0) + klaimRyadPacks * 100);
+    _spec.klaimStart = ((_spec.klaimStart || 0) + klaimStartCount);
+
+    document.getElementById('amt-base').textContent = area>0 ? fmt(baseSum) : '';
+    if (area > 0) {
+      // ТМЦ на обшивку: доска + кляймеры
+      if (boardMat + klaimMat > 0)
+        panelLines.push({ label: `ТМЦ на обшивку · ${deck.name}`, sum: boardMat + klaimMat, tag: 'tmc' });
+      // Геотекстиль
+      if (geotextilMat > 0)
+        panelLines.push({ label: 'Геотекстиль с укладкой', sum: geotextilMat, tag: 'tmc' });
+      // ТМЦ на основание: сваи
+      if (pileTotal > 0)
+        panelLines.push({ label: `ТМЦ на основание · ${document.querySelector('#pile-type option:checked')?.text?.split('—')[0]?.trim()||''}`, sum: pileTotal, tag: 'tmc' });
+      // ТМЦ на основание: арматура в узлы
+      if (rebarMat > 0)
+        panelLines.push({ label: `ТМЦ на основание · арматура ${rebarM} м`, sum: rebarMat, tag: 'tmc' });
+      // СМР: монтаж настила
+      if (nastilMont > 0)
+        panelLines.push({ label: 'СМР · монтаж настила (Р016)', sum: nastilMont, tag: 'smr' });
+      // СМР: монтаж основания (анкеровка/уголки/рег.опоры)
+      if (baseMont > 0)
+        panelLines.push({ label: 'СМР · монтаж основания', sum: baseMont, tag: 'smr' });
+    }
+  } else document.getElementById('amt-base').textContent = '';
+
+  // ── КАРКАС ──────────────────────────────────────────────
+  const PROF_PRICE = {'40x20':156,'40x40':213,'40x60':279,'40x80':459,'50x100':612};
+  let frameSum = 0;
+  if (EN.frame) {
+    const area = gv('base-area') || (gv('p-len') * gv('p-wid'));
+    const L = gv('p-len') || Math.sqrt(area * 1.5);
+    const W = gv('p-wid') || area / L;
+    const layers = parseInt(document.getElementById('frame-layers')?.value) || 2;
+    const mntRate = gv('frame-mnt') || 1950;
+
+    // Цены профилей
+    const p1Key = document.getElementById('frame-p1')?.value || '40x80';
+    const p2Key = document.getElementById('frame-p2')?.value || '40x40';
+    const p1Price = PROF_PRICE[p1Key] || 459;
+    const p2Price = PROF_PRICE[p2Key] || 213;
+
+    // 1-й слой: несущие линии (только при двухслойном)
+    // 2-й слой: лаги перпендикулярно доске, шаг 320 мм — всегда (и при однослойном)
+    // Однослойный = только 2-й слой (лаги под доску), без 1-го несущего
+    const alongLenF = (_dir !== 'wid');
+    const spanAlong = alongLenF ? L : W;   // размер вдоль доски (длина лаг)
+    const spanAcross = alongLenF ? W : L;  // размер поперёк досок (число лаг)
+
+    // 1-й слой — только если двухслойный
+    const svaiStep = 2.0;
+    const p1Lines = layers >= 2 ? Math.ceil(spanAcross / svaiStep) + 1 : 0;
+    const p1LenCalc = layers >= 2 ? Math.ceil(p1Lines * spanAlong / 6) * 6 : 0;
+
+    // 2-й слой: шаг 320 мм, отступ первой ~165 мм — и при однослойном, и при двухслойном
+    const lagStep = 0.32;
+    const p2Lines = Math.ceil((spanAcross - 0.165) / lagStep) + 1;
+    const p2LenCalc = Math.ceil(p2Lines * spanAlong / 6) * 6;
+
+    // Автозаполнение (ручное, если пользователь сильно изменил)
+    const p1Input = document.getElementById('frame-p1-len');
+    const p2Input = document.getElementById('frame-p2-len');
+    const p1Manual = p1Input && p1Input.value !== '' && Math.abs(parseFloat(p1Input.value) - p1LenCalc) > 1;
+    const p2Manual = p2Input && p2Input.value !== '' && Math.abs(parseFloat(p2Input.value) - p2LenCalc) > 1;
+    const p1Len = layers >= 2 ? (p1Manual ? gv('frame-p1-len') : p1LenCalc) : 0;
+    const p2Len = p2Manual ? gv('frame-p2-len') : p2LenCalc;
+    if (p1Input) p1Input.value = p1Len || '';
+    if (p2Input) p2Input.value = p2Len;
+
+    // UI: при однослойном скрываем 1-й слой, показываем 2-й; при двухслойном — оба
+    const l1block = document.getElementById('frame-layer1-block');
+    const l2block = document.getElementById('frame-layer2-block');
+    const l2hint = document.getElementById('frame-l2-hint');
+    if (l1block) l1block.style.display = layers >= 2 ? '' : 'none';
+    if (l2block) l2block.style.display = '';
+    if (l2hint) l2hint.textContent = layers === 1 ? '— однослойный: только этот слой' : '';
+
+    // Уплотнительная лента — под 2-й слой (лаги)
+    const withLenta = document.getElementById('cb-lenta')?.checked;
+    const lentaLen = withLenta ? p2Len : 0;
+    const lentaCost = lentaLen * 100;
+
+    // Стоимость: однослойный = только профиль 2-го слоя + лента + монтаж
+    const matCost = p1Len * p1Price + p2Len * p2Price + lentaCost;
+    const workCost = mntRate * area;
+    frameSum = matCost + workCost;
+
+    const fcLabel = document.getElementById('frame-cost-label');
+    if (fcLabel) fcLabel.textContent = frameSum > 0 ? fmt(frameSum) : '—';
+
+    _spec.frameP1Len = p1Len; _spec.frameP1Price = p1Price;
+    _spec.frameP2Len = p2Len; _spec.frameP2Price = p2Price;
+    _spec.frameLenta = lentaLen;
+    _spec.profil4080 += p1Key === '40x80' ? p1Len : 0;
+    _spec.profil4060 += p1Key === '40x60' ? p1Len : 0;
+    _spec.profil4020 += p2Key === '40x20' ? p2Len : 0;
+    _spec.lenta += lentaLen;
+
+    otherMatSum += matCost;
+    workSum += workCost;
+
+    document.getElementById('amt-frame').textContent = frameSum > 0 ? fmt(frameSum) : '';
+    if (frameSum > 0) {
+      const profLabel = layers >= 2
+        ? `ТМЦ · профиль 1-й (${p1Key}) + 2-й (${p2Key})`
+        : `ТМЦ · профиль 2-го слоя / лаги (${p2Key}) — однослойный`;
+      if (matCost > 0) panelLines.push({ label: profLabel, sum: matCost, tag: 'tmc' });
+      if (workCost > 0) panelLines.push({ label: `СМР · монтаж каркаса (${layers === 2 ? 'двухслойный' : 'однослойный'})`, sum: workCost, tag: 'smr' });
+    }
+  } else {
+    document.getElementById('amt-frame').textContent = '';
+    const fcLabel = document.getElementById('frame-cost-label');
+    if (fcLabel) fcLabel.textContent = '—';
+  }
+
+  let stepsSum = 0;
+  if (EN.steps) {
+    const len = gv('steps-len');
+    const stepsType = document.getElementById('steps-type').value;
+    const mont = len * (PRICE.stepsInstall[stepsType] || 0);
+    // Доска на ступени: ~2 пог.м рядовой на 1 пог.м ступени (проступи + подступёнки)
+    const sRyadPogm = len * 2.0 * (1 + PRICE.boardSurcharge);
+    const boardMat  = sRyadPogm * deck.ryad;
+    const sKlaimRyad   = Math.ceil(sRyadPogm / (0.33 * 100));
+    const sKlaimStart  = Math.ceil(len * 2);
+    const sKlaimMat    = sKlaimRyad * PRICE.klaimRyadPack + sKlaimStart * PRICE.klaimStart;
+    const sProfilMat   = len * 1.2 * PRICE.profil4020;
+    boardMatSum += boardMat;
+    otherMatSum += sKlaimMat + sProfilMat;
+    workSum += mont;
+    stepsSum = mont + boardMat + sKlaimMat + sProfilMat;
+    _spec.boardRyad  = ((_spec.boardRyad  || 0) + sRyadPogm);
+    _spec.klaimRyad  = ((_spec.klaimRyad  || 0) + sKlaimRyad * 100);
+    _spec.klaimStart = ((_spec.klaimStart || 0) + sKlaimStart);
+    _spec.profil4020 = ((_spec.profil4020 || 0) + len * 1.2);
+    document.getElementById('amt-steps').textContent = len>0 ? fmt(stepsSum) : '';
+    if (len > 0) panelLines.push({ label: SECTION_NAMES.steps, sum: stepsSum, tag: 'smr' });
+  } else document.getElementById('amt-steps').textContent = '';
+
+  // Прямая цена пог.м рядовой / завершающей доски из прайса
+  const ryadPrice = deck.ryad;
+  const finPrice  = deck.fin;
+
+  // Обрамление: завершающая доска уже посчитана в блоке base (boardsEdge).
+  // Здесь только монтаж окантовки.
+  let edgeSum = 0;
+  if (EN.edge) {
+    const len = gv('edge-len');
+    const mont = len * PRICE.montazObramlen;
+    workSum += mont;
+    edgeSum = mont;
+    document.getElementById('amt-edge').textContent = len>0 ? fmt(edgeSum) : '';
+    if (len > 0) panelLines.push({ label: 'СМР · монтаж обрамления', sum: edgeSum, tag: 'smr' });
+  } else document.getElementById('amt-edge').textContent = '';
+
+  let plinthSum = 0;
+  if (EN.plinth) {
+    const qty = gv('plinth-area');
+    const plinthType = document.getElementById('plinth-type').value;
+    const mont = qty * (PRICE.plinthInstall[plinthType] || 0);
+    // Цоколь: для режима "пог.м" — 1 доска на 1 пог.м; для "м²" — через шаг доски
+    const boardStep2 = deck.w / 1000 + 0.005;
+    const pRyadPogm = (plinthType === 'low' ? qty * 1.0 : (qty / boardStep2)) * (1 + PRICE.boardSurcharge);
+    const boardMat = pRyadPogm * ryadPrice;
+    const pKlaimStart = Math.ceil(qty * 2);
+    const klaimMat = pKlaimStart * PRICE.klaimStart;
+    boardMatSum += boardMat;
+    otherMatSum += klaimMat;
+    workSum += mont;
+    plinthSum = mont + boardMat + klaimMat;
+    _spec.boardRyad  = ((_spec.boardRyad  || 0) + pRyadPogm);
+    _spec.klaimStart = ((_spec.klaimStart || 0) + pKlaimStart);
+    document.getElementById('amt-plinth').textContent = qty>0 ? fmt(plinthSum) : '';
+    if (qty > 0) panelLines.push({ label: SECTION_NAMES.plinth, sum: plinthSum, tag: 'smr' });
+  } else document.getElementById('amt-plinth').textContent = '';
+
+  let railingSum = 0;
+  if (EN.railing) {
+    const len = gv('railing-len');
+    const style = document.getElementById('railing-style').value;
+    const rate = PRICE.railingRate[style] || 0;
+    railingSum = len * rate;
+    // Условно делим по структуре прайса: монтаж 4500 ₽/пог.м, остальное — материал
+    const mont = len * 4500;
+    otherMatSum += railingSum - mont;
+    workSum += mont;
+    document.getElementById('amt-railing').textContent = len>0 ? fmt(railingSum) : '';
+    if (len > 0) panelLines.push({ label: SECTION_NAMES.railing, sum: railingSum, tag: 'smr' });
+  } else document.getElementById('amt-railing').textContent = '';
+
+  let pillarSum = 0;
+  if (EN.pillar) {
+    const len = gv('pillar-len');
+    const mont = len * PRICE.montazStolb;
+    const boardPogm = len * 4.5 * (1 + PRICE.boardSurcharge);
+    const boardMat = boardPogm * ryadPrice;
+    const klaimMat = Math.ceil(boardPogm/0.33)*PRICE.klaimStart*0.3 + Math.ceil(boardPogm/33)*PRICE.klaimRyadPack;
+    const profilMat = len * 2.5 * PRICE.profil4020;
+    boardMatSum += boardMat;
+    otherMatSum += klaimMat + profilMat;
+    workSum += mont;
+    pillarSum = mont + boardMat + klaimMat + profilMat;
+    document.getElementById('amt-pillar').textContent = len>0 ? fmt(pillarSum) : '';
+    if (len > 0) panelLines.push({ label: SECTION_NAMES.pillar, sum: pillarSum, tag: 'smr' });
+  } else document.getElementById('amt-pillar').textContent = '';
+
+  let roofSum = 0;
+  let roofClientMaterial = false;
+  if (EN.roof) {
+    const area = gv('roof-area');
+    const price = parseFloat(document.getElementById('roof-type').value) || 0;
+    roofClientMaterial = document.getElementById('cb-roof-client-material').checked;
+    roofSum = area * price;
+    if (!roofClientMaterial) {
+      otherMatSum += roofSum;
+    }
+    const roofLabel = SECTION_NAMES.roof + ' (' + document.querySelector('#roof-type option:checked').text + ')' + (roofClientMaterial ? ' — материал клиента, не в итоге' : '');
+    document.getElementById('amt-roof').textContent = area>0 ? (roofClientMaterial ? 'справочно' : fmt(roofSum)) : '';
+    if (area > 0) panelLines.push({ label: roofLabel, sum: roofClientMaterial ? 0 : roofSum });
+  } else document.getElementById('amt-roof').textContent = '';
+
+  // Транспорт: km*2 (туда-обратно)*40₽ + 2500 погрузка/разгрузка, буфер ×1.5,
+  // либо ×2 если везём ещё и материал кровли отдельным рейсом; округляем до 500 ₽
+  let tr;
+  if (document.getElementById('cb-transport-manual').checked) {
+    tr = gv('transport-manual');
+  } else {
+    const distKm = gv('dist-km');
+    const roofNeedsDelivery = EN.roof && !roofClientMaterial && gv('roof-area') > 0;
+    const multiplier = roofNeedsDelivery ? 2.0 : 1.5;
+    const rawTr = (distKm * 2 * 40 + 2500) * multiplier;
+    tr = Math.ceil(rawTr / 500) * 500;
+  }
+  const mtz = PRICE.metizy;
+  otherMatSum += mtz;
+  workSum += tr;
+
+  let adT = 0; Object.values(ADS).forEach(p => adT += p);
+  otherMatSum += adT;
+
+  const materialSum = boardMatSum + otherMatSum;
+  const constructionSum = baseSum + frameSum + stepsSum + edgeSum + plinthSum + railingSum + pillarSum + (roofClientMaterial ? 0 : roofSum);
+  const pre = constructionSum + tr + mtz + adT;
+
+  const discMat = Math.min(100, Math.max(0, gv('disc-mat')));
+  const discWork = Math.min(100, Math.max(0, gv('disc-work')));
+  const daMat = Math.round(materialSum * discMat / 100);
+  const daWork = Math.round(workSum * discWork / 100);
+  const da = daMat + daWork;
+  const zamer = gv('zamer-cost');
+  const materialOnly = document.getElementById('cb-material-only').checked;
+  const grand = (materialOnly ? (materialSum - daMat) : (pre - da)) - zamer;
+
+  const pc = document.getElementById('panel-content');
+  if (!panelLines.length && !adT) {
+    pc.innerHTML = '<div class="empty-hint">Включите разделы слева</div>';
+  } else {
+    // Группируем по тегам: smr → СМР, tmc → ТМЦ, остальное → прочее
+    const smrLines  = panelLines.filter(l => l.tag === 'smr');
+    const tmcLines  = panelLines.filter(l => l.tag === 'tmc');
+    const otherLines = panelLines.filter(l => !l.tag);
+    const smrTotal  = smrLines.reduce((s,l) => s + (l.sum||0), 0);
+    const tmcTotal  = tmcLines.reduce((s,l) => s + (l.sum||0), 0);
+
+    const rowHtml = (l, indent) =>
+      `<div class="p-row" style="${indent?'padding-left:8px':''}">
+        <span style="flex:1;font-size:${indent?'10.5':'11'}px;line-height:1.3;${indent?'opacity:.85':''}">${l.label}</span>
+        <span class="v">${l.sum>0?fmt(l.sum):'—'}</span>
+      </div>`;
+
+    let h = '<div class="p-lines">';
+
+    // СМР — итог + детали
+    if (smrLines.length) {
+      h += `<div class="p-row"><span style="flex:1;font-size:11px;font-weight:700">🔨 СМР (строительно-монтажные)</span><span class="v" style="color:var(--gold2)">${fmt(smrTotal)}</span></div>`;
+      smrLines.forEach(l => { h += rowHtml(l, true); });
+    }
+
+    // ТМЦ — итог + детали
+    if (tmcLines.length) {
+      h += `<div class="p-row" style="margin-top:4px"><span style="flex:1;font-size:11px;font-weight:700">📦 ТМЦ (материалы)</span><span class="v" style="color:var(--gold2)">${fmt(tmcTotal)}</span></div>`;
+      tmcLines.forEach(l => { h += rowHtml(l, true); });
+    }
+
+    // Прочие разделы (ступени, обрамление, цоколь и т.д.)
+    otherLines.forEach(l => { h += rowHtml(l, false); });
+
+    if (adT > 0) h += `<div class="p-row"><span style="flex:1;font-size:11px">Доп. оснащение</span><span class="v">${fmt(adT)}</span></div>`;
+    h += '</div><div class="p-div"></div>';
+    if (!materialOnly) {
+      h += `<div class="p-lines"><div class="p-row p-muted"><span style="flex:1">Транспорт (${gv('dist-km')} км)</span><span class="v">${fmt(tr)}</span></div>`;
+      h += `<div class="p-row p-muted"><span style="flex:1">Метизы</span><span class="v">${fmt(mtz)}</span></div></div>`;
+    }
+    if (zamer > 0) h += `<div class="p-lines"><div class="p-row p-muted"><span style="flex:1">Минус стоимость замера</span><span class="v">−${fmt(zamer)}</span></div></div>`;
+    pc.innerHTML = h;
+  }
+  // Спецификация материалов
+  const specEl = document.getElementById('spec-content');
+  if (specEl) {
+    const s = _spec;
+    const specItems = [];
+    const dbl = parseInt(document.getElementById('deck-len')?.value)||4000;
+    const dblM = dbl/1000;
+    if (s.boardRyad > 0.1) {
+      const shts = Math.round(s.boardRyad/dblM);
+      specItems.push(`🪵 Доска рядовая: <b>${shts} шт × ${dbl}мм</b> (${s.boardRyad.toFixed(1)} пог.м)`);
+    }
+    if (s.boardFin > 0.1) {
+      const shts = Math.round(s.boardFin/dblM);
+      specItems.push(`🪵 Доска завершающая: <b>${shts} шт × ${dbl}мм</b> (${s.boardFin.toFixed(1)} пог.м)`);
+    }
+    if (s.klaimRyad > 0)    specItems.push(`🔩 Кляймер рядовой: <b>${Math.ceil(s.klaimRyad/100)} упак (${Math.ceil(s.klaimRyad)} шт)</b>`);
+    if (s.klaimStart > 0)   specItems.push(`🔩 Кляймер стартовый: <b>${Math.ceil(s.klaimStart)} шт</b>`);
+    if (s.profil4060 > 0.1) specItems.push(`🔧 Профиль 40×60: <b>${s.profil4060.toFixed(1)} пог.м</b>`);
+    if (s.profil4080 > 0.1) specItems.push(`🔧 Профиль 40×80: <b>${s.profil4080.toFixed(1)} пог.м</b>`);
+    if (s.profil4020 > 0.1) specItems.push(`🔧 Профиль 40×20: <b>${s.profil4020.toFixed(1)} пог.м</b>`);
+    if (s.lenta > 0.1)      specItems.push(`📏 Лента уплотн.: <b>${s.lenta.toFixed(1)} пог.м</b>`);
+    if (s.frameP1Len > 0)  specItems.push(`🔧 Каркас 1-й слой: <b>${s.frameP1Len} пог.м</b> × ${s.frameP1Price} ₽`);
+    if (s.frameP2Len > 0)  specItems.push(`🔧 Каркас 2-й слой: <b>${s.frameP2Len} пог.м</b> × ${s.frameP2Price} ₽`);
+    if (s.pileCount > 0)   specItems.push(`🔩 Сваи/опоры: <b>${s.pileCount} шт</b> · ${fmt(s.pileTotal||0)}`);
+    if (s.rebarM > 0)      specItems.push(`🔩 Арматура в узлы: <b>${s.rebarM} м</b> (${s.nodes} узлов × 0,3 м)`);
+    if (s.angles > 0)      specItems.push(`🔩 Уголки к бетону: <b>${s.angles} шт</b> + анкер на каждый`);
+    specEl.innerHTML = specItems.length
+      ? specItems.map(i => `<div style="font-size:10.5px;padding:2px 0;color:rgba(255,255,255,.75)">${i}</div>`).join('')
+      : '<div style="font-size:10.5px;color:rgba(255,255,255,.3)">Включите разделы</div>';
+  }
+
+  document.getElementById('disc-mat-show').textContent = daMat>0 ? '−'+fmt(daMat) : '';
+  document.getElementById('disc-work-show').textContent = (daWork>0 && !materialOnly) ? '−'+fmt(daWork) : '';
+  document.getElementById('p-total').textContent = fmt(grand);
+
+  _result = {
+    panelLines, tr, mtz, trTotal: tr+mtz, adT, constructionSum, materialSum, workSum, pre,
+    discMat, discWork, daMat, daWork, da, zamer, materialOnly, grand,
+    deckName: deck.name,
+  };
+}
+
+function dbGet(){ try{return JSON.parse(localStorage.getItem('terrasa_db')||'{}')}catch{return{}} }
+function dbSet(d){ localStorage.setItem('terrasa_db', JSON.stringify(d)); }
+function getClients(){ return dbGet().clients||[]; }
+function setClients(c){ const d=dbGet(); d.clients=c; dbSet(d); }
+function getQuotes(){ return dbGet().quotes||[]; }
+function setQuotes(q){ const d=dbGet(); d.quotes=q; dbSet(d); }
+function nextId(arr){ return arr.length ? Math.max(...arr.map(x=>x.id))+1 : 1; }
+function fmtDT(s){ return new Date(s).toLocaleString('ru-RU'); }
+
+function openSaveModal(){
+  if(!_result||_result.grand===0){alert('Введите данные в смету');return;}
+  const clients=getClients();
+  const sel=document.getElementById('save-client-sel');
+  sel.innerHTML='<option value="">— выберите клиента —</option>'+clients.map(c=>`<option value="${c.id}">${c.name}${c.addr?' · '+c.addr:''}</option>`).join('');
+  document.getElementById('modal-save').classList.add('open');
+}
+function toggleNC(){
+  const el=document.getElementById('nc-block');
+  const show=el.style.display==='none'||!el.style.display;
+  el.style.display=show?'flex':'none';
+  document.getElementById('toggle-nc').textContent=show?'Скрыть':'+ Новый клиент';
+}
+function createClientInline(){
+  const name=document.getElementById('nc-name').value.trim();
+  if(!name){alert('Введите имя');return;}
+  const clients=getClients();
+  const c={id:nextId(clients),name,phone:document.getElementById('nc-phone').value.trim(),addr:document.getElementById('nc-addr').value.trim(),createdAt:new Date().toISOString()};
+  clients.unshift(c);setClients(clients);
+  document.getElementById('save-client-sel').appendChild(new Option(c.name+(c.addr?' · '+c.addr:''),c.id,true,true));
+  document.getElementById('nc-block').style.display='none';
+}
+function saveQuote(){
+  const cid=parseInt(document.getElementById('save-client-sel').value);
+  if(!cid){alert('Выберите клиента');return;}
+  const quotes=getQuotes();
+  const q={id:nextId(quotes),clientId:cid,title:document.getElementById('save-title').value.trim()||'Расчёт',result:JSON.parse(JSON.stringify(_result)),createdAt:new Date().toISOString()};
+  quotes.unshift(q);setQuotes(quotes);
+  closeModal('modal-save');
+  if(confirm('Расчёт сохранён! Открыть КП?'))openKPSaved(q.id);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function openNewClientModal(){
+  ['mc-name','mc-phone','mc-addr'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-new-client').classList.add('open');
+}
+function createClient(){
+  const name=document.getElementById('mc-name').value.trim();
+  if(!name){alert('Введите имя');return;}
+  const clients=getClients();
+  const c={id:nextId(clients),name,phone:document.getElementById('mc-phone').value.trim(),addr:document.getElementById('mc-addr').value.trim(),createdAt:new Date().toISOString()};
+  clients.unshift(c);setClients(clients);
+  closeModal('modal-new-client');renderClients();
+}
+function deleteClient(id){
+  if(!confirm('Удалить клиента и все его расчёты?'))return;
+  setClients(getClients().filter(c=>c.id!==id));
+  setQuotes(getQuotes().filter(q=>q.clientId!==id));
+  renderClients();
+}
+function renderClients(){
+  const clients=getClients();const quotes=getQuotes();
+  const el=document.getElementById('clients-list');
+  if(!clients.length){el.innerHTML='<div class="empty-state"><p style="font-size:15px;font-weight:600;color:var(--g);margin-bottom:6px">Клиентов пока нет</p><p>Создайте первого или сохраните расчёт из калькулятора</p></div>';return;}
+  el.innerHTML=clients.map(c=>{
+    const cq=quotes.filter(q=>q.clientId===c.id);
+    const maxT=cq.length?Math.max(...cq.map(q=>q.result?.grand||0)):0;
+    return`<div class="client-card"><div><div class="client-name" onclick="openClientDetail(${c.id})">${c.name}</div><div class="client-meta">${[c.phone,c.addr].filter(Boolean).join(' · ')||'Контакты не указаны'}</div></div><div class="client-right"><div style="font-size:12px;color:var(--muted)">${cq.length} расч.${maxT?' · <span class="client-total">'+fmt(maxT)+'</span>':''}</div><button class="btn-link" onclick="openClientDetail(${c.id})">Открыть →</button><button class="btn-danger" onclick="deleteClient(${c.id})">Удалить</button></div></div>`;
+  }).join('');
+}
+function openClientDetail(id){
+  _currentClientId=id;
+  const c=getClients().find(x=>x.id===id);if(!c)return;
+  document.getElementById('detail-name').textContent=c.name;
+  document.getElementById('detail-meta').textContent=[c.phone,c.addr].filter(Boolean).join(' · ')||'Контакты не указаны';
+  const quotes=getQuotes().filter(q=>q.clientId===id);
+  document.getElementById('detail-qlabel').textContent='История расчётов ('+quotes.length+')';
+  const el=document.getElementById('detail-qlist');
+  if(!quotes.length){el.innerHTML='<div class="empty-state">Расчётов пока нет</div>';return;}
+  el.innerHTML=quotes.map(q=>`<div class="quote-card"><div><div class="quote-title">${q.title||'Расчёт №'+q.id}</div><div class="quote-date">${fmtDT(q.createdAt)}</div></div><div class="quote-right"><div class="quote-total">${fmt(q.result?.grand||0)}</div><button class="btn-link" onclick="openKPSaved(${q.id})">КП →</button><button class="btn-danger" onclick="deleteQuote(${q.id})">Удалить</button></div></div>`).join('');
+  showPage('client-detail');
+}
+function deleteQuote(id){
+  if(!confirm('Удалить расчёт?'))return;
+  setQuotes(getQuotes().filter(q=>q.id!==id));
+  openClientDetail(_currentClientId);
+}
+</script>
+<script>
+function openKPModal(){
+  if(!_result||_result.grand===0){alert('Введите данные в смету');return;}
+  document.getElementById('modal-kp').classList.add('open');
+}
+function doGenKP(){
+  const name=document.getElementById('kp-name').value.trim()||'—';
+  const obj=document.getElementById('kp-obj').value.trim()||'Ваш объект';
+  closeModal('modal-kp');
+  const r=Object.assign({},_result);
+  renderKP(r,name,obj);
+  showPage('kp');
+}
+function openKPSaved(quoteId){
+  const q=getQuotes().find(x=>x.id===quoteId);if(!q)return;
+  const c=getClients().find(x=>x.id===q.clientId);
+  renderKP(q.result,c?.name||'—',c?.addr||'Ваш объект');
+  showPage('kp');
+}
+
+function renderKP(r, clientName, obj){
+  const dateStr=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+  const validDate=new Date();validDate.setDate(validDate.getDate()+14);
+  const validStr=validDate.toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
+
+  document.getElementById('kp-root').innerHTML=`
+  <div class="kp-page" style="background:#2c3b33">
+    <div style="display:flex;height:1123px">
+      <div style="width:46%;padding:50px 40px;color:#efeae0;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#e7c9a8">Индивидуальное предложение</div>
+          <div style="font-family:'Fraunces',serif;font-size:19px;font-weight:700;margin-top:5px">Терраса №1</div>
+          <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#e7c9a8;margin-top:3px">официальный импортёр · GRÜNDECK</div>
+        </div>
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:36px;font-weight:600;line-height:1.05;color:#efeae0">Терраса,<br>которую<br>делают раз</div>
+          <p style="font-size:12px;color:#e7c9a8;margin-top:13px;max-width:250px;line-height:1.5">Премиальные террасные системы ДПК для частной и коммерческой недвижимости.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding-top:15px;border-top:1px solid rgba(255,255,255,.12)">
+          ${km('Для',clientName)}${km('Объект',obj)}${km('Дата',dateStr)}
+        </div>
+      </div>
+      <div style="width:54%;background:linear-gradient(160deg,#d7c9a8,#c7975f 38%,#5b4632 75%,#2c2218);position:relative;overflow:hidden">
+        <svg viewBox="0 0 430 1123" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+          <defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e8c98f"/><stop offset="45%" stop-color="#cf8e54"/><stop offset="100%" stop-color="#39281c"/></linearGradient></defs>
+          <rect width="430" height="1123" fill="url(#sk)"/>
+          <circle cx="330" cy="290" r="60" fill="#fbe3b0" opacity=".8"/>
+          <rect x="0" y="700" width="430" height="423" fill="#2f2418" opacity=".5"/>
+          ${[...Array(14)].map((_,i)=>`<rect x="${i*32}" y="760" width="28" height="363" fill="#4a3624" opacity="${.5+(i%3)*.08}"/>`).join('')}
+        </svg>
+      </div>
+    </div>
+    <div class="kp-footer dark"><span>Терраса №1 · г. Казань, ул. Сибирский тракт, 78</span><span>Telegram: @terrasa_nomer1 · +7 (953) 999-42-96</span></div>
+  </div>
+
+  <div class="kp-page">
+    <div class="kp-pad">
+      <div style="font-size:10px;color:#a39c8a;letter-spacing:.08em;margin-bottom:16px">ТЕРРАСА №1</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#c97b3d">Смета · ${obj}</div>
+      <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:#2c3b33;margin-top:5px">Прозрачная стоимость</div>
+      <p style="font-size:11px;color:#8a8473;margin-top:4px">Доска: ${r.deckName}</p>
+      <table style="width:100%;border-collapse:collapse;margin-top:14px;font-size:12px">
+        <thead><tr style="border-bottom:2px solid #2c3b33">
+          <th style="text-align:left;padding:8px 6px;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#2c3b33">Работы и материалы</th>
+          <th style="text-align:right;padding:8px 6px;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#2c3b33">Сумма</th>
+        </tr></thead>
+        <tbody>
+          ${r.panelLines.map(l=>`<tr style="border-bottom:1px solid #ece6d8"><td style="padding:8px 6px">${l.label}</td><td style="text-align:right;padding:8px 6px;font-weight:600">${fmt(l.sum)}</td></tr>`).join('')}
+          ${r.adT>0?`<tr style="border-bottom:1px solid #ece6d8"><td style="padding:8px 6px">Дополнительное оснащение</td><td style="text-align:right;padding:8px 6px;font-weight:600">${fmt(r.adT)}</td></tr>`:''}
+          <tr><td style="padding:8px 6px;color:#6b6657">Транспортные расходы</td><td style="text-align:right;padding:8px 6px">${fmt(r.tr)}</td></tr>
+          <tr><td style="padding:8px 6px;color:#6b6657">Метизы и расходные материалы</td><td style="text-align:right;padding:8px 6px">${fmt(r.mtz)}</td></tr>
+          ${r.daMat>0?`<tr><td style="padding:8px 6px;color:#c97b3d">Скидка на материал ${r.discMat}%</td><td style="text-align:right;padding:8px 6px;color:#c97b3d">−${fmt(r.daMat)}</td></tr>`:''}
+          ${r.daWork>0?`<tr><td style="padding:8px 6px;color:#c97b3d">Скидка на работы ${r.discWork}%</td><td style="text-align:right;padding:8px 6px;color:#c97b3d">−${fmt(r.daWork)}</td></tr>`:''}
+        </tbody>
+      </table>
+      <div style="margin-top:16px;padding:15px 18px;background:#2c3b33;border-radius:11px;display:flex;justify-content:space-between;align-items:center;color:#efeae0">
+        <span style="font-size:12px;font-weight:600">Итого по смете</span>
+        <span style="font-family:'Fraunces',serif;font-size:24px;font-weight:700">${fmt(r.grand)}</span>
+      </div>
+      <p style="font-size:10px;color:#9a9484;margin-top:9px">Предварительный расчёт. Цена фиксируется в договоре после выезда замерщика.</p>
+    </div>
+    <div class="kp-footer"><span>Терраса №1</span><span>terrasa1.ru</span></div>
+  </div>
+
+  <div class="kp-page" style="background:#2c3b33">
+    <div style="position:relative;padding:50px 50px 0;color:#efeae0">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#e7c9a8">Итог</div>
+      <div style="font-family:'Fraunces',serif;font-size:26px;font-weight:600;color:#efeae0;margin-top:5px">Инвестиция в 25 лет без забот</div>
+      <div style="margin-top:18px;background:rgba(255,255,255,.06);border-radius:13px;padding:18px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#c8cfc7">Монтажные работы и материалы</span><span style="font-weight:600">${fmt(r.constructionSum)}</span></div>
+        ${r.adT>0?`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#c8cfc7">Доп. оснащение</span><span style="font-weight:600">${fmt(r.adT)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#c8cfc7">Транспорт и метизы</span><span style="font-weight:600">${fmt(r.trTotal)}</span></div>
+        ${r.daMat>0?`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#e7c9a8">Скидка на материал ${r.discMat}%</span><span style="font-weight:600;color:#e7c9a8">−${fmt(r.daMat)}</span></div>`:''}
+        ${r.daWork>0?`<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0"><span style="color:#e7c9a8">Скидка на работы ${r.discWork}%</span><span style="font-weight:600;color:#e7c9a8">−${fmt(r.daWork)}</span></div>`:''}
+        <div style="margin-top:12px;padding-top:13px;border-top:1px solid rgba(255,255,255,.18);display:flex;justify-content:space-between;align-items:baseline">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Итого по проекту</span>
+          <span style="font-family:'Fraunces',serif;font-size:30px;font-weight:700">${fmt(r.grand)}</span>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#e7c9a8;margin-top:9px">Предложение действует до ${validStr}</p>
+      <div style="margin-top:28px">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#e7c9a8">Три шага до готовой террасы</div>
+        <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          ${kstep('01','Позвоните или напишите','+7 (953) 999-42-96<br>Telegram @terrasa_nomer1')}
+          ${kstep('02','Бесплатный замер','Специалист приедет и подтвердит смету')}
+          ${kstep('03','Договор и монтаж','Фиксированная цена, гарантия, поэтапная оплата, монтаж под ключ')}
+        </div>
+      </div>
+      <div style="margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        ${kwhy('Склад','4 000 м²','в наличии, отгрузка в день')}
+        ${kwhy('Гарантия','5 лет','на монтажные работы')}
+        ${kwhy('Статус','Офиц.','импортёр Gründeck')}
+        ${kwhy('Оплата','Рассрочка','Сбербанк, НДС/без НДС')}
+      </div>
+    </div>
+    <div class="kp-footer dark"><span>Терраса №1 · г. Казань, ул. Сибирский тракт, 78</span><span>+7 (953) 999-42-96</span></div>
+  </div>`;
+}
+
+function km(l,v){return`<div><div style="text-transform:uppercase;letter-spacing:.1em;color:#e7c9a8;font-size:9px;font-weight:700">${l}</div><div style="margin-top:2px;font-weight:600;font-size:12px">${v}</div></div>`}
+function kstep(n,t,d){return`<div style="background:rgba(255,255,255,.06);border-radius:11px;padding:13px"><div style="font-family:'Fraunces',serif;font-size:19px;color:#c97b3d;font-weight:700">${n}</div><div style="font-size:12px;font-weight:700;color:#efeae0;margin-top:5px">${t}</div><div style="font-size:11px;color:#c8cfc7;margin-top:4px;line-height:1.5">${d}</div></div>`}
+function kwhy(l,b,s){return`<div style="background:rgba(255,255,255,.07);border-radius:11px;padding:13px"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#e7c9a8">${l}</div><div style="font-family:'Fraunces',serif;font-size:16px;font-weight:700;color:#efeae0;margin-top:4px">${b}</div><div style="font-size:10px;color:#c8cfc7;margin-top:3px">${s}</div></div>`}
+
+async function downloadPDF(){
+  const btn=document.getElementById('pdf-btn');
+  const status=document.getElementById('pdf-status');
+  btn.disabled=true; btn.textContent='⏳ Формируется...'; status.textContent='';
+  try{
+    const {jsPDF}=window.jspdf;
+    const pages=document.querySelectorAll('#kp-root .kp-page');
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    for(let i=0;i<pages.length;i++){
+      status.textContent=`Страница ${i+1} из ${pages.length}...`;
+      const canvas=await html2canvas(pages[i],{scale:2,useCORS:true,allowTaint:true,backgroundColor:null,width:794,height:1123});
+      if(i>0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,210,297);
+    }
+    pdf.save('Терраса №1.pdf');
+    status.textContent='✅ Сохранено!';
+    setTimeout(()=>{status.textContent='';},3000);
+  }catch(e){
+    console.error(e);
+    status.textContent='Ошибка — пробуем печать';
+    window.print();
+  }finally{
+    btn.disabled=false; btn.textContent='📄 Скачать PDF';
+  }
+}
+
+updBaseHint();
+syncPileType();
+updPlinthLabel();
+recalc();
+// Запускаем расчёт параметров при загрузке
+setTimeout(onParamsChange, 50);
+</script>
+</body>
+</html>
